@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Statim — Inspection Immobilière IA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --navy:#1a2640; --navy2:#243352; --blue:#2f5496; --blue-lt:#e8eef7;
+  --accent2:#2e7d5e; --danger:#c0392b; --gold:#b8860b;
+  --bg:#f4f5f8; --white:#ffffff;
+  --border:#dde2ec; --border2:#c8d0e0;
+  --text:#1a2640; --text2:#3d4f6e; --muted:#7a8ba8; --rec:#c0392b;
+  --shadow:0 1px 4px rgba(26,38,64,.07),0 4px 16px rgba(26,38,64,.06);
+  --shadow-md:0 2px 8px rgba(26,38,64,.09),0 8px 28px rgba(26,38,64,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+header{background:var(--navy);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(26,38,64,.3);}
+.logo{font-family:'DM Serif Display',serif;font-size:1rem;color:#fff;display:flex;align-items:center;gap:10px;}
+.logo-icon{width:28px;height:28px;background:rgba(255,255,255,.12);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.logo-sub{font-family:'DM Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;}
+.v-tag{font-family:'DM Mono',monospace;font-size:.52rem;background:rgba(47,84,150,.5);color:rgba(255,255,255,.65);padding:2px 6px;border-radius:3px;}
+.step-indicator{display:flex;gap:5px;align-items:center;}
+.step-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .3s;}
+.step-dot.active{background:#fff;width:18px;border-radius:3px;}
+.step-dot.done{background:rgba(46,125,94,.8);}
+
+main{max-width:860px;margin:0 auto;padding:28px 16px 80px;}
+.screen{display:none;animation:fadeIn .3s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+h1{font-family:'DM Serif Display',serif;font-size:clamp(1.6rem,4vw,2.2rem);font-weight:400;color:var(--navy);line-height:1.2;margin-bottom:6px;}
+h2{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:var(--navy);margin-bottom:12px;}
+p.sub{color:var(--muted);font-size:.87rem;line-height:1.65;margin-bottom:22px;font-weight:300;}
+.section-label{font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.screen-band{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);border-radius:12px;padding:20px 22px;margin-bottom:22px;color:#fff;}
+.screen-band h1{color:#fff;margin-bottom:4px;font-size:clamp(1.35rem,3vw,1.8rem);}
+.screen-band p.sub{color:rgba(255,255,255,.58);font-size:.83rem;margin-bottom:0;}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+.mode-tabs{display:flex;background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow);}
+.mode-tab{flex:1;padding:12px 10px;text-align:center;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .2s;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;}
+.mode-tab:hover{color:var(--navy);background:var(--blue-lt);}
+.mode-tab.active{background:var(--navy);color:#fff;}
+
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--shadow);}
+
+.field-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:560px){.field-group{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:5px;}
+label{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;font-weight:500;}
+input,select,textarea{background:var(--white);border:1.5px solid var(--border);color:var(--text);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:.9rem;border-radius:7px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,84,150,.1);}
+select option{background:#fff;color:var(--text);}
+
+.room-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+.chip{padding:6px 13px;border-radius:100px;border:1.5px solid var(--border2);background:var(--white);color:var(--muted);font-size:.8rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s;user-select:none;}
+.chip:hover{border-color:var(--blue);color:var(--navy);}
+.chip.selected{background:var(--navy);border-color:var(--navy);color:#fff;}
+.chip.add-chip{border-style:dashed;border-color:var(--blue);color:var(--blue);background:var(--blue-lt);}
+.chip.add-chip:hover{background:var(--blue);color:#fff;}
+
+.btn{padding:10px 20px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--navy2);box-shadow:0 4px 12px rgba(26,38,64,.25);}
+.btn-primary:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;box-shadow:none;}
+.btn-ghost{background:var(--white);border:1.5px solid var(--border2);color:var(--text2);}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy);}
+.btn-success{background:var(--accent2);color:#fff;}
+.btn-success:hover{background:#256b50;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover{background:#254480;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;}
+
+.progress-wrap{margin:2px 0 20px;}
+.progress-info{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.63rem;color:var(--muted);margin-bottom:6px;}
+.progress-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--accent2));border-radius:3px;transition:width .5s ease;}
+
+.room-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.room-item{background:var(--white);border:1.5px solid var(--border);border-radius:9px;padding:11px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;transition:all .18s;box-shadow:var(--shadow);}
+.room-item:hover{border-color:var(--blue);transform:translateX(2px);}
+.room-item.done{border-color:var(--accent2);background:#f0faf6;}
+.room-item.active-room{border-color:var(--navy);background:var(--blue-lt);box-shadow:0 0 0 3px rgba(47,84,150,.1);}
+.room-name{font-weight:600;font-size:.88rem;color:var(--navy);}
+.room-badge{font-family:'DM Mono',monospace;font-size:.63rem;padding:3px 8px;border-radius:100px;background:var(--bg);color:var(--muted);border:1px solid var(--border);white-space:nowrap;}
+.room-item.done .room-badge{background:#d4f0e6;color:var(--accent2);border-color:#b8e8d4;}
+.room-item.active-room .room-badge{background:var(--navy);color:#fff;border-color:var(--navy);}
+.photo-count{font-size:.63rem;color:var(--blue);font-family:'DM Mono',monospace;}
+
+/* ── RECORDER ── */
+.recorder-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:26px 22px;display:flex;flex-direction:column;align-items:center;gap:13px;margin-bottom:16px;position:relative;box-shadow:var(--shadow-md);}
+.room-tag{position:absolute;top:13px;left:16px;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;color:var(--blue);text-transform:uppercase;background:var(--blue-lt);padding:3px 8px;border-radius:4px;border:1px solid rgba(47,84,150,.15);}
+.rec-btn{width:68px;height:68px;border-radius:50%;background:var(--white);border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:var(--shadow);}
+.rec-btn:hover{border-color:var(--rec);box-shadow:0 0 0 6px rgba(192,57,43,.08);}
+.rec-btn.recording{border-color:var(--rec);animation:pulse 1.3s ease-in-out infinite;background:#fff5f5;}
+.rec-btn.recording .rec-circle{border-radius:5px;}
+.rec-circle{width:24px;height:24px;background:var(--rec);border-radius:50%;transition:border-radius .2s;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.2)}50%{box-shadow:0 0 0 12px rgba(192,57,43,0)}}
+.rec-timer{font-family:'DM Mono',monospace;font-size:1.4rem;color:var(--muted);letter-spacing:.2em;font-weight:500;}
+.rec-timer.active{color:var(--rec);}
+.rec-status{font-size:.77rem;color:var(--muted);font-weight:300;text-align:center;}
+.transcript-live{width:100%;min-height:28px;font-size:.82rem;color:var(--muted);font-style:italic;text-align:center;padding:0 12px;line-height:1.5;display:none;}
+.transcript-live.visible{display:block;}
+
+/* ── SEGMENTS ── */
+.segments-wrap{margin-top:16px;}
+.segments-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.btn-clear-segs{background:none;border:none;font-size:.75rem;color:var(--danger);cursor:pointer;font-family:'DM Sans',sans-serif;padding:3px 6px;border-radius:4px;}
+.btn-clear-segs:hover{background:#fdecea;}
+.segment-item{background:var(--white);border:1.5px solid var(--border);border-radius:9px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;box-shadow:var(--shadow);margin-bottom:7px;}
+.segment-num{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--blue);background:var(--blue-lt);padding:2px 7px;border-radius:4px;white-space:nowrap;margin-top:2px;font-weight:500;border:1px solid rgba(47,84,150,.15);flex-shrink:0;}
+.segment-text{font-size:.83rem;line-height:1.55;color:var(--text2);flex:1;font-style:italic;}
+.segment-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;padding:0 3px;flex-shrink:0;}
+.segment-delete:hover{color:var(--danger);}
+.segments-total{font-family:'DM Mono',monospace;font-size:.67rem;color:var(--muted);margin-top:8px;padding:8px 12px;background:var(--blue-lt);border-radius:7px;border:1px solid rgba(47,84,150,.12);}
+
+/* ── ANALYSIS ── */
+.analysis-card{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:13px;animation:fadeIn .3s ease;box-shadow:var(--shadow);}
+.analysis-card h3{font-family:'DM Serif Display',serif;font-size:.96rem;font-weight:400;margin-bottom:8px;display:flex;align-items:center;gap:8px;color:var(--navy);}
+.icon{width:23px;height:23px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.78rem;flex-shrink:0;}
+.icon-warn{background:#fdecea;color:var(--danger);}
+.icon-ok{background:#e8f5f0;color:var(--accent2);}
+.checklist{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.checklist li{display:flex;align-items:flex-start;gap:8px;font-size:.83rem;line-height:1.5;color:var(--text2);}
+.cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--white);}
+.cb.checked{background:var(--accent2);border-color:var(--accent2);color:#fff;font-size:.63rem;}
+.cb.checked::after{content:'\2713';font-weight:700;}
+.urgent .cb{border-color:var(--danger);}
+.urgent .cb.checked{background:var(--danger);border-color:var(--danger);}
+
+/* ── PHOTOS ── */
+.photo-section{margin-bottom:18px;}
+.photo-section-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px;}
+.photo-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;}
+.photo-slot{aspect-ratio:4/3;border-radius:8px;border:2px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--bg);}
+.photo-slot:hover{border-color:var(--blue);background:var(--blue-lt);}
+.photo-slot.captured{border-style:solid;border-color:var(--accent2);}
+.photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:6px;}
+.slot-label{font-size:.63rem;color:var(--muted);text-align:center;padding:0 6px;line-height:1.3;position:relative;z-index:1;}
+.photo-slot.captured .slot-label{display:none;}
+.slot-icon{font-size:1.2rem;position:relative;z-index:1;}
+.delete-btn{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid var(--border);color:var(--danger);font-size:.68rem;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;font-weight:bold;}
+.photo-slot.captured:hover .delete-btn{display:flex;}
+.captured-badge{position:absolute;bottom:4px;left:4px;background:var(--accent2);color:#fff;font-size:.56rem;font-weight:600;padding:2px 5px;border-radius:3px;display:none;}
+.photo-slot.captured .captured-badge{display:block;}
+#file-input{display:none;}
+
+/* ── CLÉS ── */
+.key-item{background:var(--white);border:1.5px solid var(--border);border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;box-shadow:var(--shadow);}
+.key-icon{font-size:1.1rem;flex-shrink:0;}
+.key-label{flex:1;font-size:.86rem;color:var(--text);font-weight:500;}
+.key-qty{display:flex;align-items:center;gap:6px;}
+.key-qty-btn{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border2);background:var(--white);color:var(--navy);font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.key-qty-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.key-qty-num{font-family:'DM Mono',monospace;font-size:.85rem;font-weight:600;color:var(--navy);min-width:22px;text-align:center;}
+.key-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:2px 5px;}
+.key-delete:hover{color:var(--danger);}
+
+/* ── SIGNATURES ── */
+.signature-block{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:13px;box-shadow:var(--shadow);}
+.signature-block h3{font-family:'DM Serif Display',serif;font-size:.98rem;font-weight:400;color:var(--navy);margin-bottom:4px;}
+.signature-meta{font-size:.78rem;color:var(--muted);margin-bottom:11px;font-weight:300;}
+.sig-canvas-wrap{position:relative;border:1.5px solid var(--border2);border-radius:8px;overflow:hidden;background:#fafbfc;touch-action:none;}
+.sig-canvas-wrap canvas{display:block;width:100%;height:140px;cursor:crosshair;}
+.sig-actions{display:flex;gap:8px;margin-top:9px;}
+.sig-status{font-size:.7rem;font-family:'DM Mono',monospace;color:var(--accent2);margin-top:5px;min-height:15px;}
+
+/* ── COMPARATIF ── */
+.compare-banner{background:#eef3fb;border:1.5px solid #c5d4ed;border-radius:12px;padding:16px 18px;margin-bottom:18px;}
+.compare-banner h3{font-family:'DM Serif Display',serif;font-size:.98rem;font-weight:400;color:var(--navy);margin-bottom:7px;}
+.diff-tag{display:inline-flex;align-items:center;gap:5px;font-size:.69rem;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:4px;font-weight:500;}
+.diff-new{background:#fdecea;color:var(--danger);border:1px solid #f5c6c3;}
+.diff-fixed{background:#e8f5f0;color:var(--accent2);border:1px solid #b8e0d0;}
+.compare-room{background:var(--white);border:1.5px solid var(--border);border-radius:10px;margin-bottom:11px;overflow:hidden;box-shadow:var(--shadow);}
+.compare-room-header{padding:10px 15px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;}
+.compare-room-header span{font-weight:600;font-size:.86rem;color:#fff;}
+.compare-cols{display:grid;grid-template-columns:1fr 1fr;}
+@media(max-width:560px){.compare-cols{grid-template-columns:1fr;}}
+.compare-col{padding:13px 15px;}
+.compare-col:first-child{border-right:1px solid var(--border);}
+.compare-col-title{font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;font-weight:500;}
+.col-entry{color:var(--blue);}
+.col-exit{color:var(--accent2);}
+.diff-item{font-size:.81rem;line-height:1.5;padding:3px 0;border-bottom:1px solid var(--border);color:var(--text2);}
+.diff-item:last-child{border-bottom:none;}
+.diff-item.highlight{color:var(--danger);}
+
+/* ── SUMMARY ── */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px;}
+@media(max-width:560px){.summary-grid{grid-template-columns:1fr 1fr;}}
+.stat-card{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--shadow);}
+.stat-num{font-family:'DM Serif Display',serif;font-size:1.9rem;color:var(--navy);line-height:1;}
+.stat-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-family:'DM Mono',monospace;}
+
+.pdf-preview{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px;max-height:270px;overflow-y:auto;font-size:.78rem;line-height:1.75;color:var(--text2);font-family:'DM Mono',monospace;box-shadow:var(--shadow);}
+.loader{display:flex;align-items:center;gap:9px;padding:11px 0;color:var(--muted);font-size:.83rem;}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.saved-edl-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.saved-edl-item{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:11px;box-shadow:var(--shadow);}
+.saved-edl-info .addr{font-weight:600;font-size:.87rem;color:var(--navy);}
+.saved-edl-info .meta{font-size:.71rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;}
+.edl-type-badge{font-size:.66rem;padding:3px 9px;border-radius:5px;font-family:'DM Mono',monospace;font-weight:600;white-space:nowrap;}
+.badge-entree{background:var(--blue-lt);color:var(--blue);border:1px solid #c5d4ed;}
+.badge-sortie{background:#e8f5f0;color:var(--accent2);border:1px solid #b8e0d0;}
+
+#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:.83rem;font-weight:500;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:999;box-shadow:var(--shadow-md);}
+#toast.show{opacity:1;transform:translateY(0);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── MODE SELECTOR ── */
+.mode-selector-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.mode-selector-btns{grid-template-columns:1fr;}}
+.mode-sel-btn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:14px 16px;border-radius:10px;border:2px solid var(--border);background:var(--white);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-align:left;box-shadow:var(--shadow);}
+.mode-sel-btn:hover{border-color:var(--blue);background:var(--blue-lt);}
+.mode-sel-btn.active{border-color:var(--navy);background:var(--navy);}
+.mode-sel-icon{font-size:1.3rem;}
+.mode-sel-label{font-size:.9rem;font-weight:600;color:var(--navy);}
+.mode-sel-btn.active .mode-sel-label{color:#fff;}
+.mode-sel-sub{font-size:.71rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.mode-sel-btn.active .mode-sel-sub{color:rgba(255,255,255,.55);}
+
+/* ── QC PRIORITY ITEMS ── */
+.qc-item{background:var(--white);border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;box-shadow:var(--shadow);transition:all .2s;}
+.qc-item:hover{border-color:var(--blue-lt);}
+.qc-item-text{flex:1;font-size:.85rem;color:var(--text);font-weight:500;}
+.qc-item-note{font-size:.75rem;color:var(--muted);margin-top:2px;font-style:italic;}
+.priority-btns{display:flex;gap:5px;flex-shrink:0;}
+.priority-btn{width:28px;height:28px;border-radius:6px;border:1.5px solid var(--border2);background:var(--white);cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;transition:all .15s;font-weight:700;}
+.priority-btn:hover{transform:scale(1.1);}
+.priority-btn.p-ok{border-color:#22c55e;}
+.priority-btn.p-ok.active{background:#22c55e;border-color:#22c55e;color:#fff;}
+.priority-btn.p-plan{border-color:#f59e0b;}
+.priority-btn.p-plan.active{background:#f59e0b;border-color:#f59e0b;color:#fff;}
+.priority-btn.p-urgent{border-color:#f97316;}
+.priority-btn.p-urgent.active{background:#f97316;border-color:#f97316;color:#fff;}
+.priority-btn.p-prio{border-color:var(--danger);}
+.priority-btn.p-prio.active{background:var(--danger);border-color:var(--danger);color:#fff;}
+.qc-item-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;padding:2px 4px;flex-shrink:0;}
+.qc-item-delete:hover{color:var(--danger);}
+
+/* QC Summary pills */
+.qc-summary-pills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+.qc-pill{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:.8rem;font-weight:600;font-family:'DM Mono',monospace;}
+.pill-ok{background:#dcfce7;color:#166534;border:1.5px solid #bbf7d0;}
+.pill-plan{background:#fef3c7;color:#92400e;border:1.5px solid #fde68a;}
+.pill-urgent{background:#ffedd5;color:#9a3412;border:1.5px solid #fed7aa;}
+.pill-prio{background:#fee2e2;color:#991b1b;border:1.5px solid #fecaca;}
+
+/* ── RESPONSIVE MOBILE ── */
+@media(max-width:480px){
+  main{padding:20px 12px 80px;}
+  .screen-band{padding:16px;border-radius:10px;}
+  .screen-band h1{font-size:1.35rem;}
+  .recorder-card{padding:22px 16px;}
+  .rec-btn{width:80px;height:80px;}
+  .rec-circle{width:28px;height:28px;}
+  .rec-timer{font-size:1.6rem;}
+  .card{padding:16px;}
+  .btn{padding:13px 16px;font-size:.88rem;}
+  .btn-row .btn{flex:1;justify-content:center;}
+  .photo-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+  .summary-grid{grid-template-columns:1fr 1fr;}
+  .mode-selector-btns{grid-template-columns:1fr 1fr;}
+  .mode-sel-btn{padding:12px 10px;}
+  .mode-sel-icon{font-size:1.1rem;}
+  .mode-sel-label{font-size:.82rem;}
+  .priority-btns{gap:3px;}
+  .priority-btn{width:30px;height:30px;}
+  .sig-canvas-wrap canvas{height:120px;}
+  .room-item{padding:11px 12px;}
+  header{padding:0 14px;}
+  .logo-sub{display:none;}
+}
+@media(max-width:360px){
+  .mode-selector-btns{grid-template-columns:1fr;}
+}
+.chip{min-height:36px;display:flex;align-items:center;}
+.rec-btn,.btn,.priority-btn,.key-qty-btn{-webkit-tap-highlight-color:transparent;}
+input,select,textarea{font-size:16px !important;}
+@media(min-width:561px){input,select,textarea{font-size:.9rem !important;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏠</div>
+    <div>
+      Statim <span class="v-tag">v3</span>
+      <div class="logo-sub">Dictez. L’IA rédige.</div>
+    </div>
+  </div>
+  <div class="step-indicator" id="step-dots"></div>
+</header>
+
+<main>
+
+<!-- SCREEN 0 : ACCUEIL -->
+<div class="screen active" id="screen0">
+  <div class="screen-band">
+    <h1>Nouvelle inspection</h1>
+    <p class="sub">Renseignez les informations du bien et démarrez l'état des lieux assisté par IA.</p>
+  </div>
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-new" onclick="setMode('new')">✦ Nouvelle inspection</button>
+    <button class="mode-tab" id="tab-compare" onclick="setMode('compare')">⇄ Comparatif Entrée / Sortie</button>
+  </div>
+
+  <div id="mode-new">
+    <div class="card">
+      <h2>Informations du bien</h2>
+      <!-- Mode selector -->
+      <div class="mode-selector-wrap" style="margin-bottom:14px">
+        <div class="mode-selector-btns" id="mode-selector-btns">
+          <button class="mode-sel-btn active" id="mode-btn-edl" onclick="setAppMode('edl')">
+            <span class="mode-sel-icon">📋</span>
+            <span class="mode-sel-label">État des Lieux</span>
+            <span class="mode-sel-sub">Bailleur · Locataire · Agences &amp; Régies</span>
+          </button>
+          <button class="mode-sel-btn" id="mode-btn-qc" onclick="setAppMode('qc')">
+            <span class="mode-sel-icon">✅</span>
+            <span class="mode-sel-label">Contrôle Qualité</span>
+            <span class="mode-sel-sub">Conciergerie · Hôtel · Coliving</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field"><label>Adresse / Nom de l'unité</label><input id="f-addr" type="text" placeholder="Appartement 4B — 12 rue de Rive"></div>
+        <div class="field"><label>Type de bien</label>
+          <select id="f-type" onchange="applyRoomTemplate(this.value)">
+            <option>Appartement</option><option>Maison</option><option>Studio</option><option>Villa</option><option>Bureau</option><option>Chambre d'hôtel</option>
+          </select>
+        </div>
+      </div>
+      <!-- EDL fields -->
+      <div id="edl-fields">
+        <div class="field-group">
+          <div class="field"><label>Locataire / Client</label><input id="f-tenant" type="text" placeholder="Prénom Nom"></div>
+          <div class="field"><label>Type d'état des lieux</label>
+            <select id="f-edl-type"><option>Entrée</option><option>Sortie</option><option>Intermédiaire</option></select>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field"><label>Bailleur / Représentant</label><input id="f-owner" type="text" placeholder="Nom du bailleur ou agence"></div>
+          <div class="field"><label>Surface</label><input id="f-surface" placeholder="68 m²"></div>
+        </div>
+      </div>
+      <!-- QC fields -->
+      <div id="qc-fields" style="display:none">
+        <div class="field-group">
+          <div class="field"><label>Responsable / Agent</label><input id="f-qc-agent" type="text" placeholder="Prénom Nom"></div>
+          <div class="field"><label>Type de contrôle</label>
+            <select id="f-qc-type"><option>Rotation / Ménage</option><option>Contrôle hebdomadaire</option><option>Inspection mensuelle</option><option>Remise en état</option></select>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field"><label>Organisation</label><input id="f-qc-org" type="text" placeholder="Nom de la conciergerie / hôtel"></div>
+          <div class="field"><label>Surface</label><input id="f-surface-qc" placeholder="68 m²"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field"><label>Date</label><input id="f-date" type="date"></div>
+        <div class="field"><label>Heure</label><input id="f-time" type="time"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Pièces à inspecter</h2>
+      <p class="sub" style="margin-bottom:13px">Les pièces s'adaptent au type de bien. Sélectionnez celles à inspecter.</p>
+      <div class="room-chips" id="room-chips">
+        <div class="chip add-chip" id="add-room-btn">+ Ajouter</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startInspection()">Commencer l'inspection →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mode-compare" style="display:none">
+    <div class="card">
+      <h2>Comparer deux états des lieux</h2>
+      <p class="sub">Sélectionnez un EDL d'entrée et un EDL de sortie pour identifier les dégâts locatifs.</p>
+      <div id="no-saved-msg" style="color:var(--muted);font-size:.87rem;padding:8px 0;">Aucun EDL sauvegardé pour le moment.</div>
+      <div id="compare-selectors" style="display:none">
+        <div class="field-group">
+          <div class="field"><label>EDL d'Entrée</label><select id="sel-entree"><option value="">— Sélectionner —</option></select></div>
+          <div class="field"><label>EDL de Sortie</label><select id="sel-sortie"><option value="">— Sélectionner —</option></select></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-blue" onclick="runComparison()">⇄ Lancer le comparatif IA</button></div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:6px">EDL sauvegardés</div>
+    <div class="saved-edl-list" id="saved-edl-list"></div>
+  </div>
+</div>
+
+<!-- SCREEN 1 : INSPECTION PIÈCES -->
+<div class="screen" id="screen1">
+  <div class="screen-band">
+    <h1 id="rec-room-title">Enregistrement</h1>
+    <p class="sub">Dictez l'état en plusieurs segments, puis prenez les photos.</p>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-info"><span id="progress-label">Progression</span></div>
+    <div class="progress-track"><div class="progress-fill" id="room-progress"></div></div>
+  </div>
+  <div class="room-list" id="room-list-nav"></div>
+
+  <div class="recorder-card">
+    <span class="room-tag" id="active-room-tag">—</span>
+    <div class="rec-btn" id="rec-btn" onclick="toggleRecording()"><div class="rec-circle"></div></div>
+    <div class="rec-timer" id="rec-timer">00:00</div>
+    <div class="rec-status" id="rec-status">Appuyez pour enregistrer</div>
+    <div class="transcript-live" id="transcript-live"></div>
+  </div>
+
+  <div id="segments-area" style="display:none">
+    <div class="segments-wrap">
+      <div class="segments-header">
+        <div class="section-label" style="margin-bottom:0;flex:1">Segments enregistrés</div>
+        <button class="btn-clear-segs" onclick="clearAllSegments()">Tout effacer</button>
+      </div>
+      <div id="segments-list"></div>
+      <div class="segments-total" id="segments-total"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="skipRoom()">Passer cette pièce</button>
+    <button class="btn btn-primary" id="btn-analyze" onclick="analyzeRoom()" disabled>Analyser avec l'IA →</button>
+  </div>
+  <div id="loader-analyze" style="display:none"><div class="loader"><div class="spinner"></div><span id="loader-text">Analyse en cours…</span></div></div>
+  <div id="analysis-results"></div>
+  <div id="photo-capture-zone" style="display:none">
+    <div class="divider"></div>
+    <h2>📷 Photos — <span id="photo-zone-room"></span></h2>
+    <p class="sub">Appuyez sur chaque vignette pour capturer ou importer une photo.</p>
+    <div id="photo-slots-container"></div>
+  </div>
+  <div class="btn-row" id="btn-next-row" style="display:none">
+    <button class="btn btn-success" onclick="nextRoom()">Pièce suivante →</button>
+  </div>
+</div>
+
+<!-- SCREEN 2 : CLÉS -->
+<div class="screen" id="screen2">
+  <div class="screen-band">
+    <h1>Remise des clés</h1>
+    <p class="sub">Dictez les clés présentes et prenez une photo de chaque clé ou trousseau.</p>
+  </div>
+
+  <div class="card">
+    <h2>Enregistrer les clés</h2>
+    <p class="sub" style="margin-bottom:14px">Dictez verbalement (ex : "clé porte principale fois deux, badge parking fois un") ou ajoutez manuellement.</p>
+    <div class="recorder-card" style="padding:20px 18px">
+      <span class="room-tag">Clés</span>
+      <div class="rec-btn" id="rec-btn-keys" onclick="toggleKeysRecording()"><div class="rec-circle" id="rec-circle-keys"></div></div>
+      <div class="rec-timer" id="rec-timer-keys">00:00</div>
+      <div class="rec-status" id="rec-status-keys">Appuyez pour dicter les clés</div>
+      <div class="transcript-live" id="transcript-live-keys"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input id="key-manual-input" type="text" placeholder="ex: Clé porte principale × 2" style="flex:1">
+      <button class="btn btn-blue" onclick="addKeyManual()" style="white-space:nowrap;padding:10px 16px">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div id="keys-list-area" style="display:none">
+    <div class="section-label">Clés enregistrées</div>
+    <div id="keys-list"></div>
+  </div>
+
+  <div id="keys-photo-area" style="display:none">
+    <div class="divider"></div>
+    <h2>📷 Photos des clés</h2>
+    <p class="sub">Prenez une photo de chaque clé ou trousseau pour le dossier.</p>
+    <div id="keys-photo-grid" class="photo-grid"></div>
+  </div>
+
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn btn-ghost" onclick="goScreen(3)">Ignorer</button>
+    <button class="btn btn-primary" onclick="goScreen(3)">Signatures →</button>
+  </div>
+</div>
+
+<!-- SCREEN 3 : SIGNATURES -->
+<div class="screen" id="screen3">
+  <div class="screen-band">
+    <h1>Signatures</h1>
+    <p class="sub">Faites signer les deux parties. Les signatures seront intégrées dans le PDF.</p>
+  </div>
+  <div class="signature-block">
+    <h3>Bailleur / Représentant</h3>
+    <div class="signature-meta" id="sig-owner-name">—</div>
+    <div class="sig-canvas-wrap"><canvas id="canvas-owner" height="140"></canvas></div>
+    <div class="sig-actions">
+      <button class="btn btn-ghost" style="padding:8px 15px;font-size:.82rem" onclick="clearSig('owner')">Effacer</button>
+      <button class="btn btn-primary" style="padding:8px 15px;font-size:.82rem" onclick="saveSig('owner')">Valider ✓</button>
+    </div>
+    <div class="sig-status" id="sig-status-owner"></div>
+  </div>
+  <div class="signature-block">
+    <h3>Locataire / Représentant</h3>
+    <div class="signature-meta" id="sig-tenant-name">—</div>
+    <div class="sig-canvas-wrap"><canvas id="canvas-tenant" height="140"></canvas></div>
+    <div class="sig-actions">
+      <button class="btn btn-ghost" style="padding:8px 15px;font-size:.82rem" onclick="clearSig('tenant')">Effacer</button>
+      <button class="btn btn-primary" style="padding:8px 15px;font-size:.82rem" onclick="saveSig('tenant')">Valider ✓</button>
+    </div>
+    <div class="sig-status" id="sig-status-tenant"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goScreen(4)">Ignorer</button>
+    <button class="btn btn-primary" onclick="goScreen(4)">Générer le rapport →</button>
+  </div>
+</div>
+
+<!-- SCREEN 4 : RAPPORT -->
+<div class="screen" id="screen4">
+  <div class="screen-band">
+    <h1>Rapport complet</h1>
+    <p class="sub">État des lieux prêt — clés, photos et signatures intégrées.</p>
+  </div>
+  <div class="summary-grid" id="summary-stats"></div>
+  <div class="section-label">Aperçu du rapport</div>
+  <div class="pdf-preview" id="pdf-preview-area"></div>
+  <div id="loader-pdf" style="display:none"><div class="loader"><div class="spinner"></div><span>Génération du PDF…</span></div></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-download-pdf" onclick="currentAppMode==='qc'?generateQCPDF():generatePDF()">📄 Télécharger le PDF</button>
+    <button class="btn btn-success" id="btn-save-edl" onclick="saveEDL()">💾 Sauvegarder l'EDL</button>
+    <button class="btn btn-ghost" onclick="newInspection()">Nouvelle inspection</button>
+  </div>
+</div>
+
+<!-- SCREEN 5 : COMPARATIF -->
+<div class="screen" id="screen5">
+  <div class="screen-band">
+    <h1>Comparatif Entrée / Sortie</h1>
+    <p class="sub" id="compare-subtitle">—</p>
+  </div>
+  <div id="compare-banner-area"></div>
+  <div id="compare-rooms-area"></div>
+  <div id="loader-compare" style="display:none"><div class="loader"><div class="spinner"></div><span>Analyse comparative IA…</span></div></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateComparePDF()">📄 PDF Comparatif</button>
+    <button class="btn btn-ghost" onclick="goScreen(0)">← Retour</button>
+  </div>
+</div>
+
+</main>
+<input type="file" id="file-input" accept="image/*" capture="environment">
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let appMode = 'new';
+let selectedRooms = [], currentRoomIdx = 0, inspectionData = {}, roomResults = {};
+let signatures = { owner: null, tenant: null };
+let savedEDLs = [];
+try { savedEDLs = JSON.parse(localStorage.getItem('edl_saves') || '[]'); } catch(e) { savedEDLs = []; }
+let compareData = { entree: null, sortie: null, diff: null };
+
+// Segments recorder state
+let isRecording = false, timerInterval = null, elapsed = 0, recognition = null;
+let segments = [];
+
+// Keys state
+let keysData = [];
+let keysRecording = false, keysTimerInterval = null, keysElapsed = 0, keysRecognition = null;
+let pendingKeyPhotoId = null;
+
+// Room photo state
+let pendingSlotKey = null;
+
+// Signature state
+const sigState = {
+  owner: { drawing: false, lastX: 0, lastY: 0 },
+  tenant: { drawing: false, lastX: 0, lastY: 0 }
+};
+
+// ═══════════════════════════════════════════
+//  ROOM TEMPLATES
+// ═══════════════════════════════════════════
+const ROOM_TEMPLATES = {
+  Appartement: ["Entrée / Couloir","Salon","Séjour","Cuisine","Chambre principale","Chambre 2","Chambre 3","Salle de bain","WC","Buanderie","Cave","Garage","Terrasse / Balcon"],
+  Maison:      ["Entrée / Couloir","Salon","Séjour / Salle à manger","Cuisine","Chambre principale","Chambre 2","Chambre 3","Salle de bain","WC","Buanderie","Sous-sol / Cave","Garage","Jardin","Terrasse / Balcon"],
+  Studio:      ["Pièce principale","Coin cuisine","Salle de bain / WC","Entrée","Cave"],
+  Villa:       ["Entrée / Hall","Salon","Salle à manger","Cuisine","Chambre principale","Chambre 2","Chambre 3","Chambre 4","Salle de bain principale","Salle de bain 2","WC","Buanderie","Garage","Piscine / Pool house","Jardin","Terrasse"],
+  Bureau:      ["Entrée / Accueil","Salle d'attente","Open space","Bureau 1","Bureau 2","Bureau 3","Salle de réunion principale","Salle de réunion 2","Salle de repos / Cuisine","WC Hommes","WC Femmes","Local technique","Couloir","Terrasse / Balcon"],
+  "Chambre d'hôtel": ["Chambre","Salle de bain","WC","Entrée / Couloir","Placard / Dressing","Terrasse / Balcon","Couloir extérieur"],
+};
+
+function applyRoomTemplate(type) {
+  const rooms = ROOM_TEMPLATES[type] || ROOM_TEMPLATES.Appartement;
+  const container = document.getElementById('room-chips');
+  const addBtn = document.getElementById('add-room-btn');
+  container.querySelectorAll('.chip[data-room]').forEach(c => c.remove());
+  selectedRooms = [];
+  rooms.forEach(room => {
+    const chip = document.createElement('div');
+    chip.className = 'chip'; chip.dataset.room = room; chip.textContent = room;
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      if (chip.classList.contains('selected')) { if (!selectedRooms.includes(room)) selectedRooms.push(room); }
+      else { selectedRooms = selectedRooms.filter(x => x !== room); }
+    });
+    container.insertBefore(chip, addBtn);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function buildStepDots(n) {
+  document.getElementById('step-dots').innerHTML =
+    Array.from({length:n}, (_,i) => `<div class="step-dot" id="dot${i}"></div>`).join('');
+}
+function setDots(a) {
+  document.querySelectorAll('.step-dot').forEach((d,i) => {
+    d.className = 'step-dot';
+    if (i < a) d.classList.add('done');
+    else if (i === a) d.classList.add('active');
+  });
+}
+function goScreen(n) {
+  document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i === n));
+  setDots(n);
+  if (n === 2) initKeysScreen();
+  if (n === 3) initSignatureScreen();
+  if (n === 4) buildReport();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function setMode(m) {
+  appMode = m;
+  document.getElementById('tab-new').classList.toggle('active', m === 'new');
+  document.getElementById('tab-compare').classList.toggle('active', m === 'compare');
+  document.getElementById('mode-new').style.display = m === 'new' ? '' : 'none';
+  document.getElementById('mode-compare').style.display = m === 'compare' ? '' : 'none';
+  if (m === 'compare') renderSavedEDLs();
+}
+
+// ═══════════════════════════════════════════
+//  SETUP
+// ═══════════════════════════════════════════
+function setupChips() {
+  applyRoomTemplate('Appartement');
+  document.getElementById('add-room-btn').addEventListener('click', () => {
+    const name = prompt('Nom de la pièce :');
+    if (!name?.trim()) return;
+    const n = name.trim();
+    const container = document.getElementById('room-chips');
+    const addBtn = document.getElementById('add-room-btn');
+    const chip = document.createElement('div');
+    chip.className = 'chip selected'; chip.dataset.room = n; chip.textContent = n;
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      if (chip.classList.contains('selected')) { if (!selectedRooms.includes(n)) selectedRooms.push(n); }
+      else { selectedRooms = selectedRooms.filter(x => x !== n); }
+    });
+    container.insertBefore(chip, addBtn);
+    selectedRooms.push(n);
+  });
+}
+
+function startInspection() {
+  if (currentAppMode === 'qc') { startQCInspection(); return; }
+  if (!selectedRooms.length) { toast('Sélectionnez au moins une pièce'); return; }
+  inspectionData = {
+    address: document.getElementById('f-addr').value || 'Adresse non renseignée',
+    type: document.getElementById('f-type').value,
+    tenant: document.getElementById('f-tenant').value || 'Non renseigné',
+    owner: document.getElementById('f-owner').value || 'Non renseigné',
+    edlType: document.getElementById('f-edl-type').value,
+    surface: document.getElementById('f-surface').value || '—',
+    date: document.getElementById('f-date').value,
+    time: document.getElementById('f-time').value,
+  };
+  signatures = { owner: null, tenant: null };
+  currentRoomIdx = 0; roomResults = {};
+  buildRoomNav(); loadRoom(0); goScreen(1);
+}
+
+// ═══════════════════════════════════════════
+//  ROOM NAV
+// ═══════════════════════════════════════════
+function buildRoomNav() {
+  const done = selectedRooms.filter(r => roomResults[r]).length;
+  const lbl = document.getElementById('progress-label');
+  if (lbl) lbl.textContent = `${done} / ${selectedRooms.length} pièces complétées`;
+  document.getElementById('room-list-nav').innerHTML = selectedRooms.map((r,i) => {
+    const res = roomResults[r];
+    const pc = res?.photos?.filter(p => p.dataUrl).length || 0;
+    return `<div class="room-item ${i===currentRoomIdx?'active-room':''} ${res?'done':''}" onclick="jumpRoom(${i})">
+      <span class="room-name">${r}</span>
+      <div style="display:flex;align-items:center;gap:7px">
+        ${pc > 0 ? `<span class="photo-count">📷 ${pc}</span>` : ''}
+        <span class="room-badge">${res ? '✓ complété' : 'à faire'}</span>
+      </div></div>`;
+  }).join('');
+  document.getElementById('room-progress').style.width = (done / selectedRooms.length * 100) + '%';
+}
+
+function jumpRoom(idx) {
+  if (isRecording) stopRecording();
+  currentRoomIdx = idx; loadRoom(idx);
+}
+
+function loadRoom(idx) {
+  const room = selectedRooms[idx];
+  document.getElementById('rec-room-title').textContent = room;
+  document.getElementById('active-room-tag').textContent = room;
+  document.getElementById('rec-timer').textContent = '00:00';
+  document.getElementById('rec-timer').classList.remove('active');
+  document.getElementById('rec-status').textContent = 'Appuyez pour enregistrer';
+  document.getElementById('rec-btn').classList.remove('recording');
+  document.getElementById('transcript-live').className = 'transcript-live';
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('analysis-results').innerHTML = '';
+  document.getElementById('btn-next-row').style.display = 'none';
+  document.getElementById('loader-analyze').style.display = 'none';
+  document.getElementById('photo-capture-zone').style.display = 'none';
+  // Reset segments for this room
+  segments = [];
+  if (roomResults[room] && roomResults[room].transcript && !roomResults[room].skipped) {
+    segments = [{ id: Date.now(), text: roomResults[room].transcript }];
+    document.getElementById('btn-analyze').disabled = false;
+    showStoredResults(room);
+    showPhotoZone(room, false);
+    document.getElementById('btn-next-row').style.display = 'flex';
+  }
+  renderSegments();
+  buildRoomNav();
+}
+
+// ═══════════════════════════════════════════
+//  MULTI-SEGMENT RECORDER
+// ═══════════════════════════════════════════
+function toggleRecording() { isRecording ? stopRecording() : startRecording(); }
+
+function startRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const live = document.getElementById('transcript-live');
+  if (!SR) {
+    const text = prompt("Dictée vocale non disponible.\nDécrivez l'état de la pièce :");
+    if (text?.trim()) { addSegment(text.trim()); }
+    return;
+  }
+  live.className = 'transcript-live visible';
+  live.textContent = '…';
+  recognition = new SR();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  let segFinal = '';
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) segFinal += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    live.textContent = (segFinal + interim).trim() || '…';
+  };
+  recognition.onerror = (e) => { if (e.error !== 'no-speech') toast('Erreur micro : ' + e.error); };
+  recognition.onend = () => {
+    live.className = 'transcript-live'; live.textContent = '';
+    if (segFinal.trim().length > 2) addSegment(segFinal.trim());
+  };
+  recognition.start();
+  isRecording = true; elapsed = 0;
+  document.getElementById('rec-btn').classList.add('recording');
+  document.getElementById('rec-status').textContent = 'Enregistrement — appuyez pour stopper';
+  document.getElementById('rec-timer').classList.add('active');
+  timerInterval = setInterval(() => {
+    elapsed++;
+    document.getElementById('rec-timer').textContent =
+      String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0');
+  }, 1000);
+}
+
+function stopRecording() {
+  if (recognition) { try { recognition.stop(); } catch(e) {} }
+  isRecording = false; clearInterval(timerInterval);
+  document.getElementById('rec-btn').classList.remove('recording');
+  document.getElementById('rec-status').textContent = 'Segment enregistré — appuyez pour en ajouter un autre';
+  document.getElementById('rec-timer').classList.remove('active');
+  document.getElementById('rec-timer').textContent = '00:00';
+}
+
+function addSegment(text) {
+  segments.push({ id: Date.now() + Math.random(), text });
+  renderSegments();
+  document.getElementById('btn-analyze').disabled = false;
+}
+
+function deleteSegment(id) {
+  segments = segments.filter(s => s.id !== id);
+  renderSegments();
+  if (!segments.length) document.getElementById('btn-analyze').disabled = true;
+}
+
+function clearAllSegments() {
+  if (!confirm('Effacer tous les segments ?')) return;
+  segments = []; renderSegments();
+  document.getElementById('btn-analyze').disabled = true;
+}
+
+function renderSegments() {
+  const area = document.getElementById('segments-area');
+  if (!segments.length) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  document.getElementById('segments-list').innerHTML = segments.map((s,i) => `
+    <div class="segment-item">
+      <span class="segment-num">#${i+1}</span>
+      <span class="segment-text">${s.text}</span>
+      <button class="segment-delete" onclick="deleteSegment(${s.id})">✕</button>
+    </div>`).join('');
+  const words = segments.map(s => s.text).join(' ').split(/\s+/).filter(Boolean).length;
+  document.getElementById('segments-total').textContent =
+    `${segments.length} segment${segments.length > 1 ? 's' : ''} · ~${words} mots · L'IA analysera l'ensemble`;
+}
+
+function getAllSegmentsText() {
+  return segments.map((s,i) => `[Segment ${i+1}] ${s.text}`).join('\n');
+}
+
+function skipRoom() {
+  if (isRecording) stopRecording();
+  segments = []; renderSegments();
+  if (currentAppMode === 'qc') {
+    qcData[selectedRooms[currentRoomIdx]] = { transcript: '(ignoré)', skipped: true, items: [], photos: [] };
+    nextQCRoom(); return;
+  }
+  roomResults[selectedRooms[currentRoomIdx]] = { transcript: '(pièce ignorée)', skipped: true, photos: [] };
+  advanceOrFinish();
+}
+
+// ═══════════════════════════════════════════
+//  AI ANALYSIS
+// ═══════════════════════════════════════════
+async function analyzeRoom() {
+  if (currentAppMode === 'qc') { await analyzeQCRoom(); return; }
+  if (isRecording) stopRecording();
+  const room = selectedRooms[currentRoomIdx];
+  const transcript = getAllSegmentsText().trim();
+  if (!transcript) { toast('Aucun segment enregistré'); return; }
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('loader-analyze').style.display = 'block';
+  document.getElementById('loader-text').textContent = `Analyse de "${room}"…`;
+  document.getElementById('analysis-results').innerHTML = '';
+
+  const prompt = `Expert état des lieux immobilier Suisse/France.
+Pièce : "${room}"
+Description (plusieurs segments) : "${transcript}"
+JSON uniquement :
+{"etat_general":"bon|passable|mauvais","observations":"1-2 phrases","reparations_urgentes":["..."],"ameliorations":["..."],"photos_requises":["description défaut"],"photos_ensemble":["Vue ensemble 1 — ${room}","Vue ensemble 2 — ${room}","Vue ensemble 3 — ${room}"]}`;
+
+  try {
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await resp.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    storeRoomResult(room, getAllSegmentsText(), parsed);
+  } catch(e) {
+    const demo = { etat_general: 'passable', observations: 'Pièce en état passable, quelques défauts à noter.', reparations_urgentes: ['Fissure visible sur le mur nord', 'Poignée de porte défectueuse'], ameliorations: ['Peinture à rafraîchir'], photos_requises: ['Gros plan fissure mur nord'], photos_ensemble: [`Vue ensemble 1 — ${room}`, `Vue ensemble 2 — ${room}`, `Vue ensemble 3 — ${room}`] };
+    storeRoomResult(room, getAllSegmentsText(), demo);
+    toast('Mode démo — clé API requise pour l\'IA réelle');
+  } finally {
+    document.getElementById('loader-analyze').style.display = 'none';
+    document.getElementById('btn-analyze').disabled = false;
+  }
+}
+
+function storeRoomResult(room, transcript, data) {
+  const photos = [
+    ...(data.photos_ensemble || []).map(l => ({ label: l, type: 'ensemble', dataUrl: null })),
+    ...(data.photos_requises || []).map(l => ({ label: l, type: 'detail', dataUrl: null }))
+  ];
+  roomResults[room] = { transcript, ...data, photos };
+  showAnalysisResults(room, data);
+  showPhotoZone(room);
+  document.getElementById('btn-next-row').style.display = 'flex';
+  buildRoomNav();
+}
+
+function showStoredResults(room) {
+  const r = roomResults[room]; if (!r || r.skipped) return;
+  showAnalysisResults(room, r);
+}
+
+function showAnalysisResults(room, data) {
+  const ec = data.etat_general === 'bon' ? 'var(--accent2)' : data.etat_general === 'mauvais' ? 'var(--danger)' : 'var(--gold)';
+  const el = { bon: '✓ Bon état', passable: '~ État passable', mauvais: '⚠ Mauvais état' }[data.etat_general] || '—';
+  let html = `<div class="analysis-card"><h3><span class="icon icon-ok">📋</span>${room}<span style="margin-left:auto;font-size:.75rem;color:${ec};font-family:'DM Mono',monospace;font-weight:600">${el}</span></h3><p style="font-size:.83rem;color:var(--muted);margin-bottom:13px;font-weight:300">${data.observations || ''}</p>`;
+  if (data.reparations_urgentes?.length) {
+    html += `<div class="section-label" style="margin-bottom:7px">⚠ Réparations à effectuer</div><ul class="checklist">`;
+    data.reparations_urgentes.forEach(x => { html += `<li class="urgent"><div class="cb" onclick="this.classList.toggle('checked')"></div><span>${x}</span></li>`; });
+    html += `</ul>`;
+  }
+  if (data.ameliorations?.length) {
+    html += `<div class="section-label" style="margin-top:13px;margin-bottom:7px">💡 Améliorations recommandées</div><ul class="checklist">`;
+    data.ameliorations.forEach(x => { html += `<li><div class="cb" onclick="this.classList.toggle('checked')"></div><span>${x}</span></li>`; });
+    html += `</ul>`;
+  }
+  html += `</div>`;
+  document.getElementById('analysis-results').innerHTML = html;
+}
+
+function showPhotoZone(room) {
+  const r = roomResults[room]; if (!r || r.skipped) return;
+  document.getElementById('photo-zone-room').textContent = room;
+  document.getElementById('photo-capture-zone').style.display = 'block';
+  const ens = r.photos.filter(p => p.type === 'ensemble');
+  const det = r.photos.filter(p => p.type === 'detail');
+  let html = '';
+  if (ens.length) { html += `<div class="photo-section"><div class="photo-section-title">🏠 Vues d'ensemble</div><div class="photo-grid">`; ens.forEach((_,i) => { html += photoSlotHTML(`${room}__ensemble__${i}`, ens[i], '🏠'); }); html += `</div></div>`; }
+  if (det.length) { html += `<div class="photo-section"><div class="photo-section-title">🔍 Défauts</div><div class="photo-grid">`; det.forEach((_,i) => { html += photoSlotHTML(`${room}__detail__${i}`, det[i], '🔍'); }); html += `</div></div>`; }
+  document.getElementById('photo-slots-container').innerHTML = html;
+}
+
+function photoSlotHTML(key, photo, icon) {
+  const has = !!photo.dataUrl;
+  return `<div class="photo-slot ${has?'captured':''}" id="slot-${CSS.escape(key)}" onclick="triggerRoomPhoto('${key}')">
+    ${has ? `<img src="${photo.dataUrl}" alt="">` : ''}
+    <span class="slot-icon">${icon}</span><span class="slot-label">${photo.label}</span>
+    <button class="delete-btn" onclick="deleteRoomPhoto(event,'${key}')">✕</button>
+    <span class="captured-badge">✓</span></div>`;
+}
+
+function triggerRoomPhoto(key) { pendingSlotKey = key; pendingKeyPhotoId = null; document.getElementById('file-input').click(); }
+function triggerKeyPhoto(id) { pendingKeyPhotoId = id; pendingSlotKey = null; document.getElementById('file-input').click(); }
+
+document.getElementById('file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    if (pendingKeyPhotoId !== null) {
+      const key = keysData.find(k => k.id === pendingKeyPhotoId);
+      if (key) { key.photoDataUrl = dataUrl; renderKeysPhotos(); toast('Photo clé enregistrée ✓'); }
+      pendingKeyPhotoId = null;
+    } else if (pendingSlotKey) {
+      const [room, type, idxStr] = pendingSlotKey.split('__');
+      const r = roomResults[room]; if (!r) return;
+      const photos = r.photos.filter(p => p.type === type);
+      const idx = parseInt(idxStr); if (photos[idx]) photos[idx].dataUrl = dataUrl;
+      const slot = document.getElementById('slot-' + CSS.escape(pendingSlotKey));
+      if (slot) { slot.classList.add('captured'); const o = slot.querySelector('img'); if (o) o.remove(); const img = document.createElement('img'); img.src = dataUrl; slot.insertBefore(img, slot.firstChild); }
+      buildRoomNav(); toast('Photo enregistrée ✓'); pendingSlotKey = null;
+    }
+  };
+  reader.readAsDataURL(file); e.target.value = '';
+});
+
+function deleteRoomPhoto(event, key) {
+  event.stopPropagation();
+  const [room, type, idxStr] = key.split('__');
+  const r = roomResults[room]; if (!r) return;
+  const photos = r.photos.filter(p => p.type === type);
+  const idx = parseInt(idxStr); if (photos[idx]) photos[idx].dataUrl = null;
+  const slot = document.getElementById('slot-' + CSS.escape(key));
+  if (slot) { slot.classList.remove('captured'); const img = slot.querySelector('img'); if (img) img.remove(); }
+  buildRoomNav();
+}
+
+function nextRoom() {
+  if (currentAppMode === 'qc') { nextQCRoom(); return; }
+  advanceOrFinish();
+}
+function advanceOrFinish() {
+  if (currentRoomIdx < selectedRooms.length - 1) { currentRoomIdx++; buildRoomNav(); loadRoom(currentRoomIdx); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  else { goScreen(2); }
+}
+
+// ═══════════════════════════════════════════
+//  CLÉS
+// ═══════════════════════════════════════════
+function initKeysScreen() { renderKeysList(); renderKeysPhotos(); }
+
+function toggleKeysRecording() { keysRecording ? stopKeysRecording() : startKeysRecording(); }
+
+function startKeysRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const live = document.getElementById('transcript-live-keys');
+  if (!SR) {
+    const text = prompt('Dictez les clés (ex: clé porte principale fois 2, badge parking) :');
+    if (text?.trim()) parseKeysFromText(text.trim());
+    return;
+  }
+  live.className = 'transcript-live visible'; live.textContent = '…';
+  keysRecognition = new SR(); keysRecognition.lang = 'fr-FR'; keysRecognition.continuous = true; keysRecognition.interimResults = true;
+  let segFinal = '';
+  keysRecognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) segFinal += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    live.textContent = (segFinal + interim).trim() || '…';
+  };
+  keysRecognition.onerror = (e) => { if (e.error !== 'no-speech') toast('Erreur micro : ' + e.error); };
+  keysRecognition.onend = () => {
+    live.className = 'transcript-live'; live.textContent = '';
+    if (segFinal.trim().length > 2) parseKeysFromText(segFinal.trim());
+  };
+  keysRecognition.start();
+  keysRecording = true; keysElapsed = 0;
+  document.getElementById('rec-btn-keys').classList.add('recording');
+  document.getElementById('rec-status-keys').textContent = 'Dictée en cours — appuyez pour stopper';
+  document.getElementById('rec-timer-keys').classList.add('active');
+  keysTimerInterval = setInterval(() => {
+    keysElapsed++;
+    document.getElementById('rec-timer-keys').textContent =
+      String(Math.floor(keysElapsed/60)).padStart(2,'0') + ':' + String(keysElapsed%60).padStart(2,'0');
+  }, 1000);
+}
+
+function stopKeysRecording() {
+  if (keysRecognition) { try { keysRecognition.stop(); } catch(e) {} }
+  keysRecording = false; clearInterval(keysTimerInterval);
+  document.getElementById('rec-btn-keys').classList.remove('recording');
+  document.getElementById('rec-status-keys').textContent = 'Dictée terminée';
+  document.getElementById('rec-timer-keys').classList.remove('active');
+}
+
+function parseKeysFromText(text) {
+  const parts = text.split(/,|et\b/i).map(p => p.trim()).filter(p => p.length > 1);
+  parts.forEach(part => {
+    let label = part, qty = 1;
+    const m1 = part.match(/(\d+)\s*(?:fois|x|×)?\s*(.+)/i);
+    const m2 = part.match(/(.+?)\s*(?:x|fois|×)\s*(\d+)/i);
+    if (m1 && parseInt(m1[1]) <= 20) { qty = parseInt(m1[1]); label = m1[2].trim(); }
+    else if (m2) { qty = parseInt(m2[2]); label = m2[1].trim(); }
+    label = label.replace(/^(une?|des?|les?|la|le)\s+/i, '').trim();
+    if (label.length > 1) keysData.push({ id: Date.now() + Math.random(), label: label.charAt(0).toUpperCase() + label.slice(1), qty, photoDataUrl: null });
+  });
+  renderKeysList(); renderKeysPhotos();
+  toast(`${parts.length} clé(s) ajoutée(s)`);
+}
+
+function addKeyManual() {
+  const input = document.getElementById('key-manual-input');
+  const val = input.value.trim(); if (!val) { toast('Saisissez une description'); return; }
+  keysData.push({ id: Date.now(), label: val, qty: 1, photoDataUrl: null });
+  input.value = ''; renderKeysList(); renderKeysPhotos();
+}
+
+function updateKeyQty(id, delta) {
+  const key = keysData.find(k => k.id === id);
+  if (key) { key.qty = Math.max(1, key.qty + delta); renderKeysList(); }
+}
+
+function deleteKey(id) {
+  keysData = keysData.filter(k => k.id !== id);
+  renderKeysList(); renderKeysPhotos();
+}
+
+function renderKeysList() {
+  const area = document.getElementById('keys-list-area');
+  if (!keysData.length) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  document.getElementById('keys-list').innerHTML = keysData.map(k => `
+    <div class="key-item">
+      <span class="key-icon">🔑</span>
+      <span class="key-label">${k.label}</span>
+      <div class="key-qty">
+        <button class="key-qty-btn" onclick="updateKeyQty(${k.id}, -1)">−</button>
+        <span class="key-qty-num">${k.qty}</span>
+        <button class="key-qty-btn" onclick="updateKeyQty(${k.id}, +1)">+</button>
+      </div>
+      <button class="key-delete" onclick="deleteKey(${k.id})">✕</button>
+    </div>`).join('');
+}
+
+function renderKeysPhotos() {
+  const area = document.getElementById('keys-photo-area');
+  if (!keysData.length) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  document.getElementById('keys-photo-grid').innerHTML = keysData.map(k => {
+    const has = !!k.photoDataUrl;
+    return `<div class="photo-slot ${has?'captured':''}" onclick="triggerKeyPhoto(${k.id})">
+      ${has ? `<img src="${k.photoDataUrl}" alt="">` : ''}
+      <span class="slot-icon">🔑</span>
+      <span class="slot-label">${k.label}</span>
+      <button class="delete-btn" onclick="deleteKeyPhotoFn(event,${k.id})">✕</button>
+      <span class="captured-badge">✓</span></div>`;
+  }).join('');
+}
+
+function deleteKeyPhotoFn(event, id) {
+  event.stopPropagation();
+  const key = keysData.find(k => k.id === id);
+  if (key) { key.photoDataUrl = null; renderKeysPhotos(); }
+}
+
+// ═══════════════════════════════════════════
+//  SIGNATURES
+// ═══════════════════════════════════════════
+function initSignatureScreen() {
+  document.getElementById('sig-owner-name').textContent = inspectionData.owner || '—';
+  document.getElementById('sig-tenant-name').textContent = inspectionData.tenant || '—';
+  signatures = { owner: null, tenant: null };
+  setTimeout(() => {
+    ['owner', 'tenant'].forEach(who => {
+      const canvas = document.getElementById('canvas-' + who); if (!canvas) return;
+      canvas.width = canvas.parentElement.clientWidth || 320; canvas.height = 140;
+      const fresh = canvas.cloneNode(true);
+      canvas.parentNode.replaceChild(fresh, canvas);
+      const fc = document.getElementById('canvas-' + who);
+      const fctx = fc.getContext('2d');
+      fctx.strokeStyle = '#1a2640'; fctx.lineWidth = 2; fctx.lineCap = 'round'; fctx.lineJoin = 'round'; fctx.fillStyle = '#1a2640';
+      const getPos = (e) => { const rect = fc.getBoundingClientRect(); const src = e.touches ? e.touches[0] : e; return { x: (src.clientX - rect.left) * (fc.width / rect.width), y: (src.clientY - rect.top) * (fc.height / rect.height) }; };
+      const start = (e) => { e.preventDefault(); sigState[who].drawing = true; const p = getPos(e); sigState[who].lastX = p.x; sigState[who].lastY = p.y; fctx.beginPath(); fctx.arc(p.x, p.y, 1, 0, Math.PI * 2); fctx.fill(); };
+      const draw = (e) => { e.preventDefault(); if (!sigState[who].drawing) return; const p = getPos(e); fctx.beginPath(); fctx.moveTo(sigState[who].lastX, sigState[who].lastY); fctx.lineTo(p.x, p.y); fctx.stroke(); sigState[who].lastX = p.x; sigState[who].lastY = p.y; };
+      const stop = (e) => { e.preventDefault(); sigState[who].drawing = false; };
+      fc.addEventListener('mousedown', start); fc.addEventListener('mousemove', draw); fc.addEventListener('mouseup', stop); fc.addEventListener('mouseleave', stop);
+      fc.addEventListener('touchstart', start, { passive: false }); fc.addEventListener('touchmove', draw, { passive: false }); fc.addEventListener('touchend', stop, { passive: false });
+      document.getElementById('sig-status-' + who).textContent = '';
+    });
+  }, 60);
+}
+
+function clearSig(who) {
+  const canvas = document.getElementById('canvas-' + who); if (!canvas) return;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  signatures[who] = null; document.getElementById('sig-status-' + who).textContent = '';
+}
+
+function saveSig(who) {
+  const canvas = document.getElementById('canvas-' + who); if (!canvas) { toast('Erreur canvas'); return; }
+  const px = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+  let hasDrawing = false; for (let i = 3; i < px.length; i += 4) { if (px[i] > 10) { hasDrawing = true; break; } }
+  if (!hasDrawing) { toast('Veuillez signer avant de valider'); return; }
+  signatures[who] = canvas.toDataURL('image/png');
+  document.getElementById('sig-status-' + who).textContent = '✓ Signature enregistrée — ' + new Date().toLocaleTimeString('fr-FR');
+  toast('Signature ' + (who === 'owner' ? 'bailleur' : 'locataire') + ' validée ✓');
+}
+
+// ═══════════════════════════════════════════
+//  RAPPORT
+// ═══════════════════════════════════════════
+function buildReport() {
+  const doneRooms = selectedRooms.filter(r => roomResults[r] && !roomResults[r].skipped);
+  const allUrgent = doneRooms.flatMap(r => roomResults[r].reparations_urgentes || []);
+  const takenPhotos = doneRooms.flatMap(r => (roomResults[r].photos || []).filter(p => p.dataUrl));
+  const totalKeys = keysData.reduce((sum, k) => sum + k.qty, 0);
+  const sigCount = [signatures.owner, signatures.tenant].filter(Boolean).length;
+  document.getElementById('summary-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${doneRooms.length}</div><div class="stat-label">Pièces</div></div>
+    <div class="stat-card"><div class="stat-num">${allUrgent.length}</div><div class="stat-label">Réparations</div></div>
+    <div class="stat-card"><div class="stat-num">${takenPhotos.length}</div><div class="stat-label">Photos</div></div>
+    <div class="stat-card"><div class="stat-num">${totalKeys}</div><div class="stat-label">Clés remises</div></div>`;
+  let txt = `ÉTAT DES LIEUX ${inspectionData.edlType?.toUpperCase()}\n${inspectionData.address} · ${inspectionData.type} · ${inspectionData.surface}\nLocataire : ${inspectionData.tenant} · Bailleur : ${inspectionData.owner}\nDate : ${inspectionData.date} ${inspectionData.time}\n\n`;
+  if (keysData.length) {
+    txt += `━━ CLÉS REMISES ━━\n`;
+    keysData.forEach(k => { txt += `  🔑 ${k.label} × ${k.qty}\n`; });
+    txt += '\n';
+  }
+  doneRooms.forEach(room => {
+    const r = roomResults[room];
+    txt += `━━ ${room.toUpperCase()} ━━  [${(r.etat_general || '').toUpperCase()}]\n${r.observations || ''}\n`;
+    if (r.reparations_urgentes?.length) txt += `⚠ ${r.reparations_urgentes.join(' · ')}\n`;
+    if (r.ameliorations?.length) txt += `💡 ${r.ameliorations.join(' · ')}\n`;
+    txt += '\n';
+  });
+  txt += `Signatures : Bailleur ${signatures.owner ? '✓' : '☐'}   Locataire ${signatures.tenant ? '✓' : '☐'}`;
+  document.getElementById('pdf-preview-area').style.whiteSpace = 'pre-wrap';
+  document.getElementById('pdf-preview-area').textContent = txt;
+}
+
+// ═══════════════════════════════════════════
+//  SAVE / LOAD
+// ═══════════════════════════════════════════
+function saveEDL() {
+  const edl = { id: Date.now().toString(), inspectionData: { ...inspectionData }, roomResults: JSON.parse(JSON.stringify(roomResults)), signatures: { ...signatures }, selectedRooms: [...selectedRooms], keysData: JSON.parse(JSON.stringify(keysData)), savedAt: new Date().toISOString() };
+  savedEDLs.push(edl);
+  try { localStorage.setItem('edl_saves', JSON.stringify(savedEDLs)); } catch(e) {}
+  toast('EDL sauvegardé ✓'); renderSavedEDLs();
+}
+
+function renderSavedEDLs() {
+  const list = document.getElementById('saved-edl-list');
+  const noMsg = document.getElementById('no-saved-msg');
+  const selectors = document.getElementById('compare-selectors');
+  if (!savedEDLs.length) { noMsg.style.display = ''; selectors.style.display = 'none'; list.innerHTML = ''; return; }
+  noMsg.style.display = 'none'; selectors.style.display = '';
+  ['sel-entree', 'sel-sortie'].forEach(id => {
+    const sel = document.getElementById(id); const cur = sel.value;
+    sel.innerHTML = '<option value="">— Sélectionner —</option>';
+    savedEDLs.forEach(e => { const opt = document.createElement('option'); opt.value = e.id; opt.textContent = `${e.inspectionData.address} · ${e.inspectionData.edlType} · ${e.inspectionData.date}`; sel.appendChild(opt); });
+    sel.value = cur;
+  });
+  list.innerHTML = savedEDLs.map(e => `
+    <div class="saved-edl-item">
+      <div class="saved-edl-info"><div class="addr">${e.inspectionData.address}</div><div class="meta">${e.inspectionData.type} · ${e.inspectionData.tenant} · ${e.inspectionData.date}</div></div>
+      <span class="edl-type-badge ${e.inspectionData.edlType && e.inspectionData.edlType[0]==='E' ? 'badge-entree' : 'badge-sortie'}">${e.inspectionData.edlType}</span>
+      <button class="btn btn-ghost" style="padding:5px 11px;font-size:.76rem" onclick="deleteEDL('${e.id}')">✕</button>
+    </div>`).join('');
+}
+
+function deleteEDL(id) {
+  if (!confirm('Supprimer cet EDL ?')) return;
+  savedEDLs = savedEDLs.filter(e => e.id !== id);
+  try { localStorage.setItem('edl_saves', JSON.stringify(savedEDLs)); } catch(e) {}
+  renderSavedEDLs();
+}
+
+// ═══════════════════════════════════════════
+//  COMPARATIF
+// ═══════════════════════════════════════════
+async function runComparison() {
+  const entId = document.getElementById('sel-entree').value;
+  const sorId = document.getElementById('sel-sortie').value;
+  if (!entId || !sorId) { toast('Sélectionnez les deux EDL'); return; }
+  if (entId === sorId) { toast('Sélectionnez deux EDL différents'); return; }
+  const entEDL = savedEDLs.find(e => e.id === entId);
+  const sorEDL = savedEDLs.find(e => e.id === sorId);
+  if (!entEDL || !sorEDL) return;
+  compareData.entree = entEDL; compareData.sortie = sorEDL;
+  document.getElementById('compare-banner-area').innerHTML = '';
+  document.getElementById('compare-rooms-area').innerHTML = '';
+  document.getElementById('loader-compare').style.display = 'block';
+  goScreen(5);
+  document.getElementById('compare-subtitle').textContent = `${entEDL.inspectionData.address} · ${entEDL.inspectionData.date} → ${sorEDL.inspectionData.date}`;
+  const entSum = entEDL.selectedRooms.map(r => { const res = entEDL.roomResults[r]; if (!res || res.skipped) return null; return `${r}: état=${res.etat_general}, réparations=[${(res.reparations_urgentes || []).join(', ')}]`; }).filter(Boolean).join('\n');
+  const sorSum = sorEDL.selectedRooms.map(r => { const res = sorEDL.roomResults[r]; if (!res || res.skipped) return null; return `${r}: état=${res.etat_general}, réparations=[${(res.reparations_urgentes || []).join(', ')}]`; }).filter(Boolean).join('\n');
+  const prompt = `Expert état des lieux. Compare entrée et sortie.\nENTRÉE (${entEDL.inspectionData.date}):\n${entSum}\nSORTIE (${sorEDL.inspectionData.date}):\n${sorSum}\nJSON uniquement:\n{"resume":"bilan 2-3 phrases","degats_nouveaux":["..."],"ameliorations_constatees":["..."],"par_piece":[{"piece":"nom","entree_etat":"bon|passable|mauvais","sortie_etat":"bon|passable|mauvais","changement":"degradation|amelioration|stable","details":"explication"}],"conclusion_financiere":"estimation responsabilités locataire"}`;
+  try {
+    const resp = await fetch('/.netlify/functions/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }) });
+    const data = await resp.json();
+    const diff = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    compareData.diff = diff; renderComparison(entEDL, sorEDL, diff);
+  } catch(e) {
+    const demo = { resume: 'Comparatif en mode démo.', degats_nouveaux: ['Tache sur moquette salon'], ameliorations_constatees: ['Peinture cuisine refaite'], par_piece: [{ piece: 'Salon', entree_etat: 'bon', sortie_etat: 'passable', changement: 'degradation', details: "Tache absente à l'entrée" }], conclusion_financiere: 'Locataire potentiellement responsable des dégâts.' };
+    compareData.diff = demo; renderComparison(entEDL, sorEDL, demo);
+  } finally { document.getElementById('loader-compare').style.display = 'none'; }
+}
+
+function renderComparison(entEDL, sorEDL, diff) {
+  let banner = `<div class="compare-banner"><h3>⇄ Synthèse</h3><p style="font-size:.85rem;color:var(--text2);margin-bottom:12px;font-weight:300">${diff.resume}</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px">`;
+  (diff.degats_nouveaux || []).forEach(d => { banner += `<span class="diff-tag diff-new">⚠ ${d}</span>`; });
+  (diff.ameliorations_constatees || []).forEach(d => { banner += `<span class="diff-tag diff-fixed">✓ ${d}</span>`; });
+  banner += `</div>`;
+  if (diff.conclusion_financiere) { banner += `<div style="background:#fdecea;border:1.5px solid #f5c6c3;border-radius:8px;padding:12px 14px;font-size:.83rem"><strong style="color:var(--danger)">Conclusion financière : </strong>${diff.conclusion_financiere}</div>`; }
+  banner += `</div>`;
+  document.getElementById('compare-banner-area').innerHTML = banner;
+  const allRooms = [...new Set([...entEDL.selectedRooms, ...sorEDL.selectedRooms])];
+  document.getElementById('compare-rooms-area').innerHTML = allRooms.map(room => {
+    const entRes = entEDL.roomResults[room]; const sorRes = sorEDL.roomResults[room];
+    const aiRoom = (diff.par_piece || []).find(p => p.piece === room);
+    const chg = aiRoom?.changement || 'stable';
+    const chgLabel = chg === 'degradation' ? '↓ Dégradation' : chg === 'amelioration' ? '↑ Amélioration' : '= Stable';
+    let html = `<div class="compare-room"><div class="compare-room-header"><span>${room}</span><span style="font-size:.7rem;font-family:'DM Mono',monospace;opacity:.8">${chgLabel}</span></div><div class="compare-cols">`;
+    html += `<div class="compare-col"><div class="compare-col-title col-entry">Entrée · ${entEDL.inspectionData.date}</div>`;
+    if (entRes && !entRes.skipped) { html += `<div class="diff-item" style="color:var(--blue);font-size:.73rem;font-weight:600">État : ${entRes.etat_general?.toUpperCase()}</div>`; (entRes.reparations_urgentes || []).forEach(x => { html += `<div class="diff-item">⚠ ${x}</div>`; }); }
+    else { html += `<div class="diff-item" style="color:var(--muted);font-style:italic">Non inspecté</div>`; }
+    html += `</div><div class="compare-col"><div class="compare-col-title col-exit">Sortie · ${sorEDL.inspectionData.date}</div>`;
+    if (sorRes && !sorRes.skipped) { html += `<div class="diff-item" style="color:var(--accent2);font-size:.73rem;font-weight:600">État : ${sorRes.etat_general?.toUpperCase()}</div>`; (sorRes.reparations_urgentes || []).forEach(x => { html += `<div class="diff-item ${chg === 'degradation' ? 'highlight' : ''}">⚠ ${x}</div>`; }); }
+    else { html += `<div class="diff-item" style="color:var(--muted);font-style:italic">Non inspecté</div>`; }
+    if (aiRoom?.details) { html += `<div style="margin-top:7px;padding:7px 10px;background:var(--blue-lt);border-radius:6px;font-size:.77rem;color:var(--blue)">${aiRoom.details}</div>`; }
+    html += `</div></div></div>`;
+    return html;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  PDF
+// ═══════════════════════════════════════════
+async function generatePDF() {
+  document.getElementById('loader-pdf').style.display = 'block';
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const mg = 18, pw = 210 - mg * 2; let y = 30;
+  const addPage = () => { doc.addPage(); y = 25; };
+  const chk = (n = 12) => { if (y + n > 272) addPage(); };
+
+  doc.setFillColor(26,38,64); doc.rect(0,0,210,20,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255);
+  doc.text('ÉTAT DES LIEUX — RAPPORT', mg, 13);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(180,195,220);
+  doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')} · Dictez. L’IA rédige.`, 210 - mg, 13, { align: 'right' });
+
+  doc.setFillColor(240,244,250); doc.roundedRect(mg,y,pw,40,3,3,'F'); doc.setDrawColor(197,212,237); doc.roundedRect(mg,y,pw,40,3,3,'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,38,64);
+  doc.text(`${inspectionData.edlType?.toUpperCase()} — ${inspectionData.address}`, mg+5, y+9);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(70,85,110);
+  doc.text(`${inspectionData.type}   ·   ${inspectionData.surface}   ·   ${inspectionData.date} ${inspectionData.time}`, mg+5, y+17);
+  doc.text(`Locataire : ${inspectionData.tenant}`, mg+5, y+24);
+  doc.text(`Bailleur : ${inspectionData.owner}`, mg+5, y+31);
+  y += 48;
+
+  // ── Clés ──
+  if (keysData.length) {
+    chk(20);
+    doc.setFillColor(26,38,64); doc.rect(mg,y,pw,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(255,255,255);
+    doc.text('REMISE DES CLÉS', mg+4, y+5.5);
+    doc.text(`${keysData.reduce((s,k)=>s+k.qty,0)} clé(s)`, 210-mg-4, y+5.5, { align: 'right' });
+    y += 12;
+    keysData.forEach(k => {
+      chk(8);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
+      doc.text(`  ${k.label}`, mg+4, y);
+      doc.setFont('helvetica','bold'); doc.setTextColor(26,38,64);
+      doc.text(`× ${k.qty}`, 210-mg-4, y, { align: 'right' });
+      y += 6;
+    });
+    const keyPhotos = keysData.filter(k => k.photoDataUrl);
+    if (keyPhotos.length) {
+      chk(16); y += 4;
+      const iw = (pw-8)/3, ih = iw*0.75; let row = y;
+      for (let i = 0; i < keyPhotos.length; i++) {
+        const col = i%3; if (col === 0 && i > 0) { row += ih+7; chk(ih+10); }
+        const x = mg + col*(iw+4);
+        try { const fmt = keyPhotos[i].photoDataUrl.includes('data:image/png') ? 'PNG' : 'JPEG'; doc.addImage(keyPhotos[i].photoDataUrl, fmt, x, row, iw, ih); doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(120,120,120); doc.text(keyPhotos[i].label, x, row+ih+2.5); } catch(e) {}
+      }
+      y = row + Math.ceil(keyPhotos.length/3)*(ih+7) + 4;
+    }
+    y += 8;
+  }
+
+  // ── Pièces ──
+  const doneRooms = selectedRooms.filter(r => roomResults[r] && !roomResults[r].skipped);
+  for (const room of doneRooms) {
+    const r = roomResults[room]; chk(30);
+    doc.setFillColor(26,38,64); doc.rect(mg,y,pw,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(255,255,255);
+    doc.text(room.toUpperCase(), mg+4, y+5.5);
+    doc.text(`ÉTAT : ${(r.etat_general||'—').toUpperCase()}`, 210-mg-4, y+5.5, { align: 'right' });
+    y += 12;
+    if (r.observations) { chk(10); doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(70,85,110); const l = doc.splitTextToSize(r.observations, pw); doc.text(l,mg,y); y += l.length*4.8+3; }
+    if (r.reparations_urgentes?.length) { chk(12); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(170,55,45); doc.text('RÉPARATIONS', mg, y); y += 5; r.reparations_urgentes.forEach(item => { chk(7); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60); const l = doc.splitTextToSize(`• ${item}`, pw-5); doc.text(l,mg+4,y); y += l.length*4.8; }); y += 2; }
+    if (r.ameliorations?.length) { chk(12); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(46,125,94); doc.text('AMÉLIORATIONS', mg, y); y += 5; r.ameliorations.forEach(item => { chk(7); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60); const l = doc.splitTextToSize(`• ${item}`, pw-5); doc.text(l,mg+4,y); y += l.length*4.8; }); y += 2; }
+    const taken = (r.photos || []).filter(p => p.dataUrl);
+    if (taken.length) {
+      chk(16); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(47,84,150); doc.text(`PHOTOS (${taken.length})`, mg, y); y += 5;
+      const iw = (pw-8)/3, ih = iw*0.75; let row = y;
+      for (let i = 0; i < taken.length; i++) {
+        const col = i%3; if (col === 0 && i > 0) { row += ih+7; chk(ih+10); }
+        const x = mg + col*(iw+4);
+        try { const fmt = taken[i].dataUrl.includes('data:image/png') ? 'PNG' : 'JPEG'; doc.addImage(taken[i].dataUrl, fmt, x, row, iw, ih); doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(120,120,120); doc.text(doc.splitTextToSize(taken[i].label,iw)[0], x, row+ih+2.5); } catch(e) { doc.setFillColor(220,225,235); doc.rect(x,row,iw,ih,'F'); }
+      }
+      y = row + Math.ceil(taken.length/3)*(ih+7) + 4;
+    }
+    y += 10;
+  }
+
+  // ── Signatures ──
+  if (signatures.owner || signatures.tenant) {
+    addPage();
+    doc.setFillColor(240,244,250); doc.roundedRect(mg,y,pw,12,3,3,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,38,64);
+    doc.text('SIGNATURES DES PARTIES', mg+5, y+8); y += 20;
+    const sigW = (pw-10)/2, sigH = sigW*0.44;
+    ['owner','tenant'].forEach((who, idx) => {
+      const label = who === 'owner' ? `Bailleur — ${inspectionData.owner}` : `Locataire — ${inspectionData.tenant}`;
+      const x = mg + idx*(sigW+10);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(60,75,100); doc.text(label, x, y);
+      if (signatures[who]) { try { doc.addImage(signatures[who], 'PNG', x, y+4, sigW, sigH); } catch(e) {} }
+      else { doc.setDrawColor(200,210,225); doc.rect(x, y+4, sigW, sigH); doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(180,190,205); doc.text('Signature absente', x+sigW/2, y+4+sigH/2, { align: 'center' }); }
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140,150,165); doc.text(`Date : ${inspectionData.date}`, x, y+4+sigH+6);
+    });
+  }
+
+  const pages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(160,170,185); doc.text(`Dictez. L’IA rédige. · État des lieux IA · Page ${i}/${pages}`, 105, 290, { align: 'center' }); }
+  doc.save(`edl_${inspectionData.address.replace(/[\s,]/g,'-')}_${inspectionData.date}.pdf`);
+  document.getElementById('loader-pdf').style.display = 'none';
+  toast('PDF téléchargé ✓');
+}
+
+async function generateComparePDF() {
+  const { entree, sortie, diff } = compareData;
+  if (!entree || !sortie || !diff) { toast('Aucun comparatif disponible'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const mg = 18, pw = 210 - mg * 2; let y = 30;
+  const addPage = () => { doc.addPage(); y = 25; }; const chk = (n=10) => { if (y+n > 272) addPage(); };
+  doc.setFillColor(26,38,64); doc.rect(0,0,210,20,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255); doc.text('COMPARATIF ENTRÉE / SORTIE', mg, 13);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(180,195,220); doc.text(new Date().toLocaleDateString('fr-FR'), 210-mg, 13, { align: 'right' });
+  doc.setFillColor(240,244,250); doc.roundedRect(mg,y,pw,28,3,3,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,38,64); doc.text(entree.inspectionData.address, mg+5, y+8);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(70,85,110);
+  doc.text(`Locataire : ${entree.inspectionData.tenant}   ·   Bailleur : ${entree.inspectionData.owner}`, mg+5, y+16);
+  doc.text(`Entrée : ${entree.inspectionData.date}   →   Sortie : ${sortie.inspectionData.date}`, mg+5, y+23); y += 36;
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26,38,64); doc.text('SYNTHÈSE', mg, y); y += 5;
+  doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(60,75,100);
+  const rl = doc.splitTextToSize(diff.resume, pw); doc.text(rl, mg, y); y += rl.length*4.8+4;
+  if (diff.degats_nouveaux?.length) { chk(14); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(170,55,45); doc.text('DÉGÂTS NOUVEAUX', mg, y); y += 5; diff.degats_nouveaux.forEach(x => { chk(7); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60); const l = doc.splitTextToSize(`• ${x}`, pw-4); doc.text(l,mg+4,y); y += l.length*4.8; }); y += 4; }
+  if (diff.ameliorations_constatees?.length) { chk(14); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(46,125,94); doc.text('AMÉLIORATIONS', mg, y); y += 5; diff.ameliorations_constatees.forEach(x => { chk(7); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60); const l = doc.splitTextToSize(`• ${x}`, pw-4); doc.text(l,mg+4,y); y += l.length*4.8; }); y += 4; }
+  chk(20); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26,38,64); doc.text('DÉTAIL PAR PIÈCE', mg, y); y += 6;
+  (diff.par_piece || []).forEach(p => {
+    chk(22); const cc = p.changement === 'degradation' ? [170,55,45] : p.changement === 'amelioration' ? [46,125,94] : [100,110,125];
+    doc.setFillColor(240,244,250); doc.roundedRect(mg,y,pw,18,2,2,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(26,38,64); doc.text(p.piece, mg+4, y+6);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...cc); doc.text(`${p.entree_etat?.toUpperCase()} → ${p.sortie_etat?.toUpperCase()}  ·  ${p.changement?.toUpperCase()}`, mg+4, y+12);
+    if (p.details) { doc.setTextColor(80,90,110); doc.text(doc.splitTextToSize(p.details, pw-8)[0], mg+4, y+17); }
+    y += 22;
+  });
+  if (diff.conclusion_financiere) { chk(24); doc.setFillColor(253,236,234); doc.roundedRect(mg,y,pw,18,2,2,'F'); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(170,55,45); doc.text('CONCLUSION FINANCIÈRE', mg+5, y+7); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60); doc.text(doc.splitTextToSize(diff.conclusion_financiere, pw-10)[0], mg+5, y+13); y += 22; }
+  const pages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(160,170,185); doc.text(`Dictez. L’IA rédige. · Comparatif EDL · Page ${i}/${pages}`, 105, 290, { align: 'center' }); }
+  doc.save(`comparatif_${entree.inspectionData.address.replace(/[\s,]/g,'-')}.pdf`);
+  toast('PDF comparatif téléchargé ✓');
+}
+
+function newInspection() {
+  if (!confirm('Nouvelle inspection ? Les données actuelles seront perdues.')) return;
+  selectedRooms = []; roomResults = {}; currentRoomIdx = 0; inspectionData = {};
+  signatures = { owner: null, tenant: null }; keysData = []; segments = [];
+  applyRoomTemplate(document.getElementById('f-type')?.value || 'Appartement');
+  goScreen(0);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+
+// ═══════════════════════════════════════════
+//  APP MODE (EDL vs QC)
+// ═══════════════════════════════════════════
+let currentAppMode = 'edl'; // 'edl' | 'qc'
+
+function setAppMode(mode) {
+  currentAppMode = mode;
+  document.getElementById('mode-btn-edl').classList.toggle('active', mode === 'edl');
+  document.getElementById('mode-btn-qc').classList.toggle('active', mode === 'qc');
+  document.getElementById('edl-fields').style.display = mode === 'edl' ? '' : 'none';
+  document.getElementById('qc-fields').style.display = mode === 'qc' ? '' : 'none';
+  // Update room chips section label
+  const chipsLabel = document.querySelector('#mode-new .card:last-child h2');
+  if (chipsLabel) chipsLabel.textContent = mode === 'qc' ? 'Espaces à contrôler' : 'Pièces à inspecter';
+  // Update button text
+  const startBtn = document.querySelector('#mode-new .card:last-child .btn-primary');
+  if (startBtn) startBtn.textContent = mode === 'qc' ? 'Commencer le contrôle →' : "Commencer l'inspection →";
+}
+
+// ═══════════════════════════════════════════
+//  QC STATE
+// ═══════════════════════════════════════════
+let qcData = {}; // room => { segments:[], items:[], photos:[] }
+let qcInspectionData = {};
+
+// Priority levels
+const PRIORITIES = {
+  ok:     { label: '✓',  title: 'OK',           color: '#22c55e' },
+  plan:   { label: '🟡', title: 'À planifier',  color: '#f59e0b' },
+  urgent: { label: '🟠', title: 'Urgent',        color: '#f97316' },
+  prio:   { label: '🔴', title: 'Prioritaire',   color: '#ef4444' },
+};
+
+function startQCInspection() {
+  if (!selectedRooms.length) { toast('Sélectionnez au moins un espace'); return; }
+  qcInspectionData = {
+    address: document.getElementById('f-addr').value || 'Adresse non renseignée',
+    type: document.getElementById('f-type').value,
+    agent: document.getElementById('f-qc-agent').value || 'Non renseigné',
+    org: document.getElementById('f-qc-org').value || 'Non renseigné',
+    controlType: document.getElementById('f-qc-type').value,
+    surface: document.getElementById('f-surface-qc').value || '—',
+    date: document.getElementById('f-date').value,
+    time: document.getElementById('f-time').value,
+  };
+  qcData = {};
+  currentRoomIdx = 0;
+  buildQCNav();
+  loadQCRoom(0);
+  goQCScreen();
+}
+
+function goQCScreen() {
+  // Reuse screen1 but in QC mode
+  document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i === 1));
+  setDots(1);
+  // Update screen band
+  document.getElementById('rec-room-title').textContent = selectedRooms[0];
+  document.getElementById('active-room-tag').textContent = selectedRooms[0];
+  document.querySelector('#screen1 .screen-band p.sub').textContent = 'Dictez les observations, puis classez chaque défaut par priorité.';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buildQCNav() {
+  const done = selectedRooms.filter(r => qcData[r]).length;
+  const lbl = document.getElementById('progress-label');
+  if (lbl) lbl.textContent = `${done} / ${selectedRooms.length} espaces contrôlés`;
+  document.getElementById('room-list-nav').innerHTML = selectedRooms.map((r,i) => {
+    const d = qcData[r];
+    const urgentCount = (d?.items || []).filter(it => it.priority === 'prio' || it.priority === 'urgent').length;
+    return `<div class="room-item ${i===currentRoomIdx?'active-room':''} ${d?'done':''}" onclick="jumpQCRoom(${i})">
+      <span class="room-name">${r}</span>
+      <div style="display:flex;align-items:center;gap:7px">
+        ${urgentCount > 0 ? `<span style="font-size:.63rem;color:var(--danger);font-family:'DM Mono',monospace">⚠ ${urgentCount}</span>` : ''}
+        <span class="room-badge">${d ? '✓ contrôlé' : 'à faire'}</span>
+      </div></div>`;
+  }).join('');
+  document.getElementById('room-progress').style.width = (done / selectedRooms.length * 100) + '%';
+}
+
+function jumpQCRoom(idx) {
+  if (isRecording) stopRecording();
+  currentRoomIdx = idx; loadQCRoom(idx);
+}
+
+function loadQCRoom(idx) {
+  const room = selectedRooms[idx];
+  document.getElementById('rec-room-title').textContent = room;
+  document.getElementById('active-room-tag').textContent = room;
+  document.getElementById('rec-timer').textContent = '00:00';
+  document.getElementById('rec-timer').classList.remove('active');
+  document.getElementById('rec-btn').classList.remove('recording');
+  document.getElementById('rec-status').textContent = 'Dictez vos observations';
+  document.getElementById('transcript-live').className = 'transcript-live';
+  document.getElementById('loader-analyze').style.display = 'none';
+  document.getElementById('photo-capture-zone').style.display = 'none';
+  segments = [];
+  // Restore if already done
+  if (qcData[room]) {
+    if (qcData[room].transcript) segments = [{ id: Date.now(), text: qcData[room].transcript }];
+    document.getElementById('btn-analyze').disabled = false;
+  } else {
+    document.getElementById('btn-analyze').disabled = true;
+  }
+  renderSegments();
+  // Show QC items if they exist
+  renderQCItems(room);
+  // Update analyze button label
+  document.getElementById("btn-analyze").textContent = "Analyser avec l'IA →";
+  // Update next button
+  document.getElementById('btn-next-row').style.display = qcData[room] ? 'flex' : 'none';
+  document.getElementById('analysis-results').innerHTML = '';
+  if (qcData[room]) renderQCAnalysisCard(room);
+  buildQCNav();
+}
+
+function renderQCItems(room) {
+  // Items are shown inside analysis-results after AI call
+}
+
+async function analyzeQCRoom() {
+  if (isRecording) stopRecording();
+  const room = selectedRooms[currentRoomIdx];
+  const transcript = getAllSegmentsText().trim();
+  if (!transcript) { toast('Aucun segment enregistré'); return; }
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('loader-analyze').style.display = 'block';
+  document.getElementById('loader-text').textContent = `Analyse QC de "${room}"…`;
+  document.getElementById('analysis-results').innerHTML = '';
+
+  const prompt = `Tu es un expert en contrôle qualité immobilier (conciergerie, hôtel, coliving).
+Espace contrôlé : "${room}"
+Observations dictées : "${transcript}"
+Analyse et classe chaque problème par niveau de priorité.
+JSON uniquement :
+{
+  "etat_general": "bon|passable|mauvais",
+  "resume": "1-2 phrases sur l'état général",
+  "items": [
+    {"label": "description courte du problème", "priority": "ok|plan|urgent|prio", "note": "détail optionnel"}
+  ],
+  "photos_requises": ["description photo défaut 1"],
+  "photos_ensemble": ["Vue ensemble 1 — ${room}", "Vue ensemble 2 — ${room}"]
+}
+Niveaux : ok=satisfaisant, plan=à planifier sous 7j, urgent=sous 24h, prio=bloquant/sécurité.
+JSON seul, sans markdown.`;
+
+  try {
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await resp.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    storeQCResult(room, getAllSegmentsText(), parsed);
+  } catch(e) {
+    const demo = {
+      etat_general: 'passable',
+      resume: 'Espace en état passable. Plusieurs points à corriger avant la prochaine rotation.',
+      items: [
+        { label: 'Sol salle de bain non lavé', priority: 'urgent', note: "Visible dès l'entrée" },
+        { label: 'Ampoule grillée chambre', priority: 'plan', note: 'Luminaire principal' },
+        { label: 'Linge de lit propre et en place', priority: 'ok', note: '' },
+        { label: 'Poignée de porte fenêtre descellée', priority: 'prio', note: 'Risque de casse' },
+      ],
+      photos_requises: ['Sol salle de bain', 'Ampoule grillée'],
+      photos_ensemble: [`Vue ensemble 1 — ${room}`, `Vue ensemble 2 — ${room}`]
+    };
+    storeQCResult(room, getAllSegmentsText(), demo);
+    toast('Mode démo actif');
+  } finally {
+    document.getElementById('loader-analyze').style.display = 'none';
+    document.getElementById('btn-analyze').disabled = false;
+  }
+}
+
+function storeQCResult(room, transcript, data) {
+  const photos = [
+    ...(data.photos_ensemble || []).map(l => ({ label: l, type: 'ensemble', dataUrl: null })),
+    ...(data.photos_requises || []).map(l => ({ label: l, type: 'detail', dataUrl: null }))
+  ];
+  qcData[room] = { transcript, ...data, photos };
+  renderQCAnalysisCard(room);
+  showPhotoZone(room, true);
+  document.getElementById('btn-next-row').style.display = 'flex';
+  buildQCNav();
+}
+
+function renderQCAnalysisCard(room) {
+  const d = qcData[room]; if (!d) return;
+  const ec = d.etat_general === 'bon' ? 'var(--accent2)' : d.etat_general === 'mauvais' ? 'var(--danger)' : 'var(--gold)';
+  const el = { bon: '✓ Bon état', passable: '~ Passable', mauvais: '⚠ À corriger' }[d.etat_general] || '—';
+
+  // Count by priority
+  const counts = { ok: 0, plan: 0, urgent: 0, prio: 0 };
+  (d.items || []).forEach(it => { if (counts[it.priority] !== undefined) counts[it.priority]++; });
+
+  let html = `<div class="analysis-card">
+    <h3><span class="icon icon-ok">✅</span>${room}<span style="margin-left:auto;font-size:.75rem;color:${ec};font-family:'DM Mono',monospace;font-weight:600">${el}</span></h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:13px;font-weight:300">${d.resume || ''}</p>
+    <div class="qc-summary-pills">
+      ${counts.prio > 0 ? `<span class="qc-pill pill-prio">🔴 ${counts.prio} Prioritaire${counts.prio>1?'s':''}</span>` : ''}
+      ${counts.urgent > 0 ? `<span class="qc-pill pill-urgent">🟠 ${counts.urgent} Urgent${counts.urgent>1?'s':''}</span>` : ''}
+      ${counts.plan > 0 ? `<span class="qc-pill pill-plan">🟡 ${counts.plan} À planifier</span>` : ''}
+      ${counts.ok > 0 ? `<span class="qc-pill pill-ok">✓ ${counts.ok} OK</span>` : ''}
+    </div>`;
+
+  if (d.items?.length) {
+    html += `<div class="section-label" style="margin-bottom:9px">Points de contrôle</div>`;
+    d.items.forEach((item, i) => {
+      const p = PRIORITIES[item.priority] || PRIORITIES.plan;
+      html += `<div class="qc-item" id="qcitem-${room.replace(/\s/g,'_')}-${i}">
+        <div style="flex:1">
+          <div class="qc-item-text">${item.label}</div>
+          ${item.note ? `<div class="qc-item-note">${item.note}</div>` : ''}
+        </div>
+        <div class="priority-btns">
+          ${['ok','plan','urgent','prio'].map(pv => `<button class="priority-btn p-${pv} ${item.priority===pv?'active':''}" onclick="setQCItemPriority('${room}',${i},'${pv}')" title="${PRIORITIES[pv].title}">${PRIORITIES[pv].label}</button>`).join('')}
+        </div>
+        <button class="qc-item-delete" onclick="deleteQCItem('${room}',${i})">✕</button>
+      </div>`;
+    });
+  }
+
+  // Add custom item
+  html += `<div style="display:flex;gap:8px;margin-top:12px">
+    <input id="qc-add-input-${room.replace(/\s/g,'_')}" type="text" placeholder="Ajouter un point manuellement…" style="flex:1;font-size:.84rem">
+    <button class="btn btn-ghost" style="padding:8px 14px;font-size:.8rem" onclick="addQCItemManual('${room}')">+ Ajouter</button>
+  </div>`;
+
+  html += `</div>`;
+  document.getElementById('analysis-results').innerHTML = html;
+}
+
+function setQCItemPriority(room, idx, priority) {
+  if (qcData[room]?.items[idx]) {
+    qcData[room].items[idx].priority = priority;
+    renderQCAnalysisCard(room);
+    buildQCNav();
+  }
+}
+
+function deleteQCItem(room, idx) {
+  if (qcData[room]?.items) {
+    qcData[room].items.splice(idx, 1);
+    renderQCAnalysisCard(room);
+    buildQCNav();
+  }
+}
+
+function addQCItemManual(room) {
+  const input = document.getElementById('qc-add-input-' + room.replace(/\s/g,'_'));
+  if (!input?.value.trim()) { toast('Saisissez une description'); return; }
+  if (!qcData[room]) qcData[room] = { transcript: '', etat_general: 'passable', resume: '', items: [], photos: [] };
+  qcData[room].items.push({ label: input.value.trim(), priority: 'plan', note: '' });
+  renderQCAnalysisCard(room);
+  buildQCNav();
+}
+
+function showPhotoZone(room, isQC = false) {
+  const r = isQC ? qcData[room] : roomResults[room];
+  if (!r || r.skipped) return;
+  document.getElementById('photo-zone-room').textContent = room;
+  document.getElementById('photo-capture-zone').style.display = 'block';
+  const ens = r.photos.filter(p => p.type === 'ensemble');
+  const det = r.photos.filter(p => p.type === 'detail');
+  let html = '';
+  if (ens.length) { html += `<div class="photo-section"><div class="photo-section-title">🏠 Vues d'ensemble</div><div class="photo-grid">`; ens.forEach((_,i) => { html += photoSlotHTML(`${room}__ensemble__${i}`, ens[i], '🏠'); }); html += `</div></div>`; }
+  if (det.length) { html += `<div class="photo-section"><div class="photo-section-title">🔍 Défauts</div><div class="photo-grid">`; det.forEach((_,i) => { html += photoSlotHTML(`${room}__detail__${i}`, det[i], '🔍'); }); html += `</div></div>`; }
+  document.getElementById('photo-slots-container').innerHTML = html;
+}
+
+function nextQCRoom() {
+  if (currentRoomIdx < selectedRooms.length - 1) {
+    currentRoomIdx++; buildQCNav(); loadQCRoom(currentRoomIdx);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    buildQCReport(); goScreen(4);
+  }
+}
+
+function buildQCReport() {
+  const doneRooms = selectedRooms.filter(r => qcData[r]);
+  const allPrio = doneRooms.flatMap(r => (qcData[r].items || []).filter(it => it.priority === 'prio'));
+  const allUrgent = doneRooms.flatMap(r => (qcData[r].items || []).filter(it => it.priority === 'urgent'));
+  const takenPhotos = doneRooms.flatMap(r => (qcData[r].photos || []).filter(p => p.dataUrl));
+  document.getElementById('summary-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${doneRooms.length}</div><div class="stat-label">Espaces</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--danger)">${allPrio.length}</div><div class="stat-label">Prioritaires</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f97316">${allUrgent.length}</div><div class="stat-label">Urgents</div></div>
+    <div class="stat-card"><div class="stat-num">${takenPhotos.length}</div><div class="stat-label">Photos</div></div>`;
+  let txt = `CONTRÔLE QUALITÉ — ${qcInspectionData.controlType?.toUpperCase()}
+${qcInspectionData.address}
+${qcInspectionData.org} · Agent : ${qcInspectionData.agent}
+Date : ${qcInspectionData.date} ${qcInspectionData.time}
+
+`;
+  doneRooms.forEach(room => {
+    const d = qcData[room];
+    txt += `━━ ${room.toUpperCase()} ━━  [${(d.etat_general||'').toUpperCase()}]
+${d.resume||''}
+`;
+    ['prio','urgent','plan','ok'].forEach(pv => {
+      const items = (d.items||[]).filter(it => it.priority === pv);
+      if (items.length) txt += `  ${PRIORITIES[pv].title.toUpperCase()} : ${items.map(it=>it.label).join(' · ')}
+`;
+    });
+    txt += '\n';
+  });
+  document.getElementById('pdf-preview-area').style.whiteSpace = 'pre-wrap';
+  document.getElementById('pdf-preview-area').textContent = txt;
+}
+
+async function generateQCPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const mg = 18, pw = 210 - mg * 2; let y = 30;
+  const addPage = () => { doc.addPage(); y = 25; };
+  const chk = (n = 12) => { if (y + n > 272) addPage(); };
+
+  // Header — teal for QC
+  doc.setFillColor(17, 94, 89); doc.rect(0, 0, 210, 20, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(255, 255, 255);
+  doc.text('CONTRÔLE QUALITÉ — RAPPORT INTERNE', mg, 13);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(180, 220, 215);
+  doc.text(`${new Date().toLocaleDateString('fr-FR')} · ${qcInspectionData.org || ''}`, 210 - mg, 13, { align: 'right' });
+
+  doc.setFillColor(240, 253, 250); doc.roundedRect(mg, y, pw, 36, 3, 3, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(17, 94, 89);
+  doc.text(`${qcInspectionData.controlType?.toUpperCase()} — ${qcInspectionData.address}`, mg + 5, y + 9);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(70, 85, 80);
+  doc.text(`Agent : ${qcInspectionData.agent}   ·   ${qcInspectionData.org}`, mg + 5, y + 17);
+  doc.text(`Date : ${qcInspectionData.date} ${qcInspectionData.time}`, mg + 5, y + 24);
+  y += 44;
+
+  const doneRooms = selectedRooms.filter(r => qcData[r]);
+
+  // Summary table
+  const allPrio = doneRooms.flatMap(r => (qcData[r].items||[]).filter(it=>it.priority==='prio'));
+  const allUrgent = doneRooms.flatMap(r => (qcData[r].items||[]).filter(it=>it.priority==='urgent'));
+  const allPlan = doneRooms.flatMap(r => (qcData[r].items||[]).filter(it=>it.priority==='plan'));
+  if (allPrio.length + allUrgent.length > 0) {
+    chk(20);
+    doc.setFillColor(254, 226, 226); doc.roundedRect(mg, y, pw, 10, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(153, 27, 27);
+    doc.text(`⚠  ${allPrio.length} PRIORITAIRE(S)  ·  ${allUrgent.length} URGENT(S)  —  INTERVENTION REQUISE`, mg + 5, y + 7);
+    y += 16;
+  }
+
+  for (const room of doneRooms) {
+    const d = qcData[room]; chk(28);
+    const headerColor = d.etat_general === 'mauvais' ? [153,27,27] : d.etat_general === 'passable' ? [146,64,14] : [17,94,89];
+    doc.setFillColor(...headerColor); doc.rect(mg, y, pw, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(255, 255, 255);
+    doc.text(room.toUpperCase(), mg + 4, y + 5.5);
+    doc.text((d.etat_general||'').toUpperCase(), 210 - mg - 4, y + 5.5, { align: 'right' });
+    y += 12;
+    if (d.resume) { chk(10); doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(60,75,70); const l = doc.splitTextToSize(d.resume,pw); doc.text(l,mg,y); y += l.length*4.8+3; }
+
+    const priorityOrder = ['prio','urgent','plan','ok'];
+    const priorityColors = { prio:[153,27,27], urgent:[154,52,18], plan:[146,64,14], ok:[22,101,52] };
+    for (const pv of priorityOrder) {
+      const items = (d.items||[]).filter(it => it.priority === pv);
+      if (!items.length) continue;
+      chk(10);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...priorityColors[pv]);
+      doc.text(PRIORITIES[pv].title.toUpperCase(), mg, y); y += 5;
+      items.forEach(item => {
+        chk(7); doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+        const l = doc.splitTextToSize(`• ${item.label}${item.note ? ` — ${item.note}` : ''}`, pw - 5);
+        doc.text(l, mg + 4, y); y += l.length * 4.8;
+      });
+      y += 2;
+    }
+
+    // Photos
+    const taken = (d.photos||[]).filter(p => p.dataUrl);
+    if (taken.length) {
+      chk(16); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(17,94,89);
+      doc.text(`PHOTOS (${taken.length})`, mg, y); y += 5;
+      const iw = (pw-8)/3, ih = iw*0.75; let row = y;
+      for (let i = 0; i < taken.length; i++) {
+        const col = i%3; if (col===0 && i>0) { row += ih+7; chk(ih+10); }
+        const x = mg + col*(iw+4);
+        try { const fmt = taken[i].dataUrl.includes('data:image/png')?'PNG':'JPEG'; doc.addImage(taken[i].dataUrl,fmt,x,row,iw,ih); doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(120,120,120); doc.text(doc.splitTextToSize(taken[i].label,iw)[0],x,row+ih+2.5); } catch(e) {}
+      }
+      y = row + Math.ceil(taken.length/3)*(ih+7) + 4;
+    }
+    y += 10;
+  }
+
+  const pages = doc.internal.getNumberOfPages();
+  for (let i=1; i<=pages; i++) { doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(160,170,165); doc.text(`${qcInspectionData.org} · Contrôle Qualité · Page ${i}/${pages}`, 105, 290, { align: 'center' }); }
+  doc.save(`qc_${qcInspectionData.address.replace(/[\s,]/g,'-')}_${qcInspectionData.date}.pdf`);
+  toast('PDF Contrôle Qualité téléchargé ✓');
+}
+
+// ═══════════════════════════════════════════
+//  INIT (after all declarations)
+// ═══════════════════════════════════════════
+document.getElementById('f-date').valueAsDate = new Date();
+const _now = new Date();
+document.getElementById('f-time').value = `${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')}`;
+buildStepDots(5);
+setDots(0);
+setupChips();
+renderSavedEDLs();
+
+</script>
+</body>
+</html>
