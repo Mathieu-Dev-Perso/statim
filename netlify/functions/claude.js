@@ -5,6 +5,10 @@ exports.handler = async function(event) {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  console.log('Function called, body length:', event.body?.length);
+  console.log('API key present:', !!process.env.ANTHROPIC_API_KEY);
+  console.log('API key starts with:', process.env.ANTHROPIC_API_KEY?.substring(0, 10));
+
   return new Promise((resolve) => {
     const options = {
       hostname: 'api.anthropic.com',
@@ -20,8 +24,11 @@ exports.handler = async function(event) {
 
     const req = https.request(options, (res) => {
       let data = '';
+      console.log('Anthropic status:', res.statusCode);
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
+        console.log('Response length:', data.length);
+        console.log('Response preview:', data.substring(0, 200));
         resolve({
           statusCode: 200,
           headers: {
@@ -34,6 +41,7 @@ exports.handler = async function(event) {
     });
 
     req.on('error', (err) => {
+      console.log('Request error:', err.message);
       resolve({
         statusCode: 500,
         body: JSON.stringify({ error: err.message })
