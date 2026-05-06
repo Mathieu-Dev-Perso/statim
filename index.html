@@ -684,7 +684,7 @@ function startInspection() {
     tenant: document.getElementById('f-tenant').value || 'Non renseigné',
     owner: document.getElementById('f-owner').value || 'Non renseigné',
     edlType: document.getElementById('f-edl-type').value,
-    surface: document.getElementById('f-surface').value || '—',
+    surface: (v => v ? (v.includes('m') ? v : v + ' m²') : '—')(document.getElementById('f-surface').value),
     date: document.getElementById('f-date').value,
     time: document.getElementById('f-time').value,
   };
@@ -868,7 +868,7 @@ JSON uniquement :
 {"etat_general":"bon|passable|mauvais","observations":"1-2 phrases","reparations_urgentes":["..."],"ameliorations":["..."],"photos_requises":["description défaut"],"photos_ensemble":["Vue ensemble 1 — ${room}","Vue ensemble 2 — ${room}","Vue ensemble 3 — ${room}"]}`;
 
   try {
-    const resp = await fetch('/.netlify/functions/claude', {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
@@ -921,8 +921,9 @@ function showAnalysisResults(room, data) {
   document.getElementById('analysis-results').innerHTML = html;
 }
 
-function showPhotoZone(room) {
-  const r = roomResults[room]; if (!r || r.skipped) return;
+function showPhotoZone(room, isQC) {
+  const r = isQC ? qcData[room] : roomResults[room];
+  if (!r || r.skipped) return;
   document.getElementById('photo-zone-room').textContent = room;
   document.getElementById('photo-capture-zone').style.display = 'block';
   const ens = r.photos.filter(p => p.type === 'ensemble');
@@ -956,12 +957,15 @@ document.getElementById('file-input').addEventListener('change', (e) => {
       pendingKeyPhotoId = null;
     } else if (pendingSlotKey) {
       const [room, type, idxStr] = pendingSlotKey.split('__');
-      const r = roomResults[room]; if (!r) return;
+      // Use qcData or roomResults depending on current mode
+      const r = currentAppMode === 'qc' ? qcData[room] : roomResults[room];
+      if (!r) return;
       const photos = r.photos.filter(p => p.type === type);
       const idx = parseInt(idxStr); if (photos[idx]) photos[idx].dataUrl = dataUrl;
       const slot = document.getElementById('slot-' + CSS.escape(pendingSlotKey));
       if (slot) { slot.classList.add('captured'); const o = slot.querySelector('img'); if (o) o.remove(); const img = document.createElement('img'); img.src = dataUrl; slot.insertBefore(img, slot.firstChild); }
-      buildRoomNav(); toast('Photo enregistrée ✓'); pendingSlotKey = null;
+      if (currentAppMode === 'qc') buildQCNav(); else buildRoomNav();
+      toast('Photo enregistrée ✓'); pendingSlotKey = null;
     }
   };
   reader.readAsDataURL(file); e.target.value = '';
@@ -970,12 +974,13 @@ document.getElementById('file-input').addEventListener('change', (e) => {
 function deleteRoomPhoto(event, key) {
   event.stopPropagation();
   const [room, type, idxStr] = key.split('__');
-  const r = roomResults[room]; if (!r) return;
+  const r = currentAppMode === 'qc' ? qcData[room] : roomResults[room];
+  if (!r) return;
   const photos = r.photos.filter(p => p.type === type);
   const idx = parseInt(idxStr); if (photos[idx]) photos[idx].dataUrl = null;
   const slot = document.getElementById('slot-' + CSS.escape(key));
   if (slot) { slot.classList.remove('captured'); const img = slot.querySelector('img'); if (img) img.remove(); }
-  buildRoomNav();
+  if (currentAppMode === 'qc') buildQCNav(); else buildRoomNav();
 }
 
 function nextRoom() {
@@ -1241,7 +1246,7 @@ async function runComparison() {
   const sorSum = sorEDL.selectedRooms.map(r => { const res = sorEDL.roomResults[r]; if (!res || res.skipped) return null; return `${r}: état=${res.etat_general}, réparations=[${(res.reparations_urgentes || []).join(', ')}]`; }).filter(Boolean).join('\n');
   const prompt = `Expert état des lieux. Compare entrée et sortie.\nENTRÉE (${entEDL.inspectionData.date}):\n${entSum}\nSORTIE (${sorEDL.inspectionData.date}):\n${sorSum}\nJSON uniquement:\n{"resume":"bilan 2-3 phrases","degats_nouveaux":["..."],"ameliorations_constatees":["..."],"par_piece":[{"piece":"nom","entree_etat":"bon|passable|mauvais","sortie_etat":"bon|passable|mauvais","changement":"degradation|amelioration|stable","details":"explication"}],"conclusion_financiere":"estimation responsabilités locataire"}`;
   try {
-    const resp = await fetch('/.netlify/functions/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }) });
+    const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }) });
     const data = await resp.json();
     const diff = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
     compareData.diff = diff; renderComparison(entEDL, sorEDL, diff);
@@ -1475,7 +1480,7 @@ function startQCInspection() {
     agent: document.getElementById('f-qc-agent').value || 'Non renseigné',
     org: document.getElementById('f-qc-org').value || 'Non renseigné',
     controlType: document.getElementById('f-qc-type').value,
-    surface: document.getElementById('f-surface-qc').value || '—',
+    surface: (v => v ? (v.includes('m') ? v : v + ' m²') : '—')(document.getElementById('f-surface-qc').value),
     date: document.getElementById('f-date').value,
     time: document.getElementById('f-time').value,
   };
@@ -1535,6 +1540,7 @@ function loadQCRoom(idx) {
   if (qcData[room]) {
     if (qcData[room].transcript) segments = [{ id: Date.now(), text: qcData[room].transcript }];
     document.getElementById('btn-analyze').disabled = false;
+    showPhotoZone(room, true);
   } else {
     document.getElementById('btn-analyze').disabled = true;
   }
@@ -1582,7 +1588,7 @@ Niveaux : ok=satisfaisant, plan=à planifier sous 7j, urgent=sous 24h, prio=bloq
 JSON seul, sans markdown.`;
 
   try {
-    const resp = await fetch('/.netlify/functions/claude', {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
     });
