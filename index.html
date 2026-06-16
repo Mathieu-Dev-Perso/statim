@@ -372,6 +372,41 @@ input,select,textarea{font-size:16px !important;}
 .credit-history-item:last-child{border-bottom:none;}
 .credit-delta-pos{color:var(--accent2);font-weight:600;font-family:"DM Mono",monospace;}
 .credit-delta-neg{color:var(--danger);font-weight:600;font-family:"DM Mono",monospace;}
+
+/* ── TASKS ── */
+.task-filter-btn{padding:6px 13px;border-radius:100px;border:1.5px solid var(--border2);background:var(--white);color:var(--muted);font-size:.78rem;font-weight:500;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .18s;}
+.task-filter-btn:hover{border-color:var(--blue);color:var(--navy);}
+.task-filter-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.task-group{margin-bottom:18px;}
+.task-group-header{font-family:"DM Mono",monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.task-group-header::after{content:"";flex:1;height:1px;background:var(--border);}
+.task-card{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer;transition:all .18s;display:flex;gap:12px;align-items:flex-start;}
+.task-card:hover{border-color:var(--blue);transform:translateX(2px);}
+.task-card.done{opacity:.6;border-color:var(--accent2);background:#f0faf6;}
+.task-priority-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.dot-prio{background:var(--danger);}
+.dot-urgent{background:#f97316;}
+.dot-plan{background:#f59e0b;}
+.dot-ok{background:#22c55e;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:.88rem;font-weight:600;color:var(--navy);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.task-meta{font-size:.73rem;color:var(--muted);font-family:"DM Mono",monospace;display:flex;flex-wrap:wrap;gap:6px;}
+.task-status-badge{font-size:.63rem;font-family:"DM Mono",monospace;padding:2px 8px;border-radius:100px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.badge-todo{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.badge-doing{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+.badge-done{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;}
+.task-actions{display:flex;gap:6px;flex-shrink:0;align-items:center;}
+.task-action-btn{width:30px;height:30px;border-radius:7px;border:1.5px solid var(--border2);background:var(--white);cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.task-action-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.presta-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:100px;border:1.5px solid var(--border2);background:var(--white);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .18s;box-shadow:var(--shadow);}
+.presta-pill:hover{border-color:var(--blue);}
+.presta-pill.active-filter{background:var(--navy);border-color:var(--navy);color:#fff;}
+.presta-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);}
+.task-photo-preview{width:60px;height:45px;border-radius:6px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;}
+.resolve-zone{border:2px dashed var(--border2);border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-top:12px;}
+.resolve-zone:hover{border-color:var(--accent2);background:#f0faf6;}
+.resolve-zone.has-photo{border-style:solid;border-color:var(--accent2);}
+.resolve-zone img{width:100%;max-height:180px;object-fit:cover;border-radius:7px;}
 </style>
 </head>
 <body>
@@ -564,8 +599,9 @@ input,select,textarea{font-size:16px !important;}
     </div>
 
     <!-- Dashboard tabs -->
-    <div class="mode-tabs">
-      <button class="mode-tab active" id="dtab-new" onclick="setDashTab('new')">✦ Nouvelle inspection</button>
+    <div class="mode-tabs" style="overflow-x:auto;white-space:nowrap;">
+      <button class="mode-tab active" id="dtab-new" onclick="setDashTab('new')">✦ Inspection</button>
+      <button class="mode-tab" id="dtab-tasks" onclick="setDashTab('tasks')">🔧 Tâches</button>
       <button class="mode-tab" id="dtab-edls" onclick="setDashTab('edls')">📂 Mes EDL</button>
       <button class="mode-tab" id="dtab-credits" onclick="setDashTab('credits')">💳 Crédits</button>
     </div>
@@ -634,6 +670,27 @@ input,select,textarea{font-size:16px !important;}
         <div class="btn-row">
           <button class="btn btn-primary" onclick="startInspection()">Commencer l'inspection →</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Tab: Tâches -->
+    <div id="dash-tab-tasks" style="display:none">
+      <!-- Filtres + actions -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;">
+          <button class="task-filter-btn active" id="tf-all"    onclick="filterTasks('all')">Toutes</button>
+          <button class="task-filter-btn" id="tf-todo"   onclick="filterTasks('todo')">À faire</button>
+          <button class="task-filter-btn" id="tf-doing"  onclick="filterTasks('doing')">En cours</button>
+          <button class="task-filter-btn" id="tf-done"   onclick="filterTasks('done')">Résolues</button>
+        </div>
+        <button class="btn btn-ghost" style="font-size:.78rem;padding:7px 13px" onclick="openAddTaskModal()">+ Tâche manuelle</button>
+      </div>
+      <!-- Prestataires actifs -->
+      <div id="prestataires-strip" style="display:none;margin-bottom:16px;"></div>
+      <!-- Liste tâches -->
+      <div id="tasks-list-container"></div>
+      <div id="tasks-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem;display:none;">
+        Aucune tâche pour le moment.<br>Les tâches sont générées automatiquement à la fin d'un Contrôle Qualité.
       </div>
     </div>
 
@@ -790,6 +847,7 @@ input,select,textarea{font-size:16px !important;}
   <div class="btn-row">
     <button class="btn btn-primary" id="btn-download-pdf" onclick="requireAuthThen(currentAppMode==='qc'?'generateQCPDF':'generatePDF')">📄 Télécharger le PDF</button>
     <button class="btn btn-success" id="btn-save-edl" onclick="requireAuthThen('saveEDL')">☁ Sauvegarder l'EDL</button>
+    <button class="btn" id="btn-gen-tasks" onclick="requireAuthThen('generateTasksFromQC')" style="background:#f97316;color:#fff;display:none">🔧 Générer les tâches</button>
     <button class="btn btn-ghost" onclick="newInspection()">Nouvelle inspection</button>
   </div>
 </div>
@@ -810,6 +868,81 @@ input,select,textarea{font-size:16px !important;}
 </div>
 
 </main>
+
+<!-- ══ TASK MODALS ══ -->
+
+<!-- Modal: Envoyer mission prestataire -->
+<div id="mission-modal" style="position:fixed;inset:0;background:rgba(15,22,40,.72);z-index:9997;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);">
+  <div style="background:var(--white);border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;padding:26px;">
+    <button onclick="closeMissionModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;">✕</button>
+    <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--navy);margin-bottom:4px;">📋 Envoyer une mission</div>
+    <div style="font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:20px;">Les tâches sélectionnées seront regroupées dans un bon d'intervention.</div>
+    <div class="field" style="margin-bottom:13px"><label>Prestataire</label>
+      <select id="mission-prestataire-select" onchange="onMissionPrestaChange()">
+        <option value="">— Sélectionner ou créer —</option>
+        <option value="__new__">+ Nouveau prestataire</option>
+      </select>
+    </div>
+    <div id="new-presta-fields" style="display:none">
+      <div class="field-group">
+        <div class="field"><label>Nom</label><input id="new-presta-nom" type="text" placeholder="Dupont Plomberie"></div>
+        <div class="field"><label>Contact (tel / email)</label><input id="new-presta-contact" type="text" placeholder="+41 79 000 00 00"></div>
+      </div>
+      <div class="field" style="margin-bottom:13px"><label>Spécialité</label>
+        <select id="new-presta-specialite">
+          <option>Ménage / Nettoyage</option><option>Plomberie</option><option>Électricité</option><option>Peinture</option><option>Menuiserie</option><option>Jardinage</option><option>Multi-services</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:13px"><label>Instructions d'accès (optionnel)</label>
+      <textarea id="mission-instructions" rows="2" placeholder="Code entrée : 1234 — Clé chez la gardienne" style="resize:vertical"></textarea>
+    </div>
+    <div class="field" style="margin-bottom:18px"><label>Tâches incluses</label>
+      <div id="mission-tasks-preview" style="max-height:160px;overflow-y:auto;border:1.5px solid var(--border);border-radius:8px;padding:10px;background:var(--bg);font-size:.82rem;"></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="sendMission()">Générer le lien mission →</button>
+    </div>
+    <div id="mission-link-result" style="display:none;margin-top:16px;background:var(--blue-lt);border:1.5px solid #c5d4ed;border-radius:9px;padding:13px;">
+      <div style="font-size:.73rem;font-family:'DM Mono',monospace;color:var(--blue);margin-bottom:7px;">LIEN DE MISSION GÉNÉRÉ</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="mission-link-input" type="text" readonly style="flex:1;font-size:.75rem;background:var(--white);">
+        <button class="btn btn-ghost" style="padding:8px 12px;font-size:.78rem" onclick="copyMissionLink()">Copier</button>
+      </div>
+      <div style="margin-top:10px;font-size:.75rem;color:var(--muted);">Partagez ce lien par WhatsApp, SMS ou email. Le prestataire n'a pas besoin de compte.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ajouter tâche manuelle -->
+<div id="add-task-modal" style="position:fixed;inset:0;background:rgba(15,22,40,.72);z-index:9997;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);">
+  <div style="background:var(--white);border-radius:16px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;padding:26px;">
+    <button onclick="closeAddTaskModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;">✕</button>
+    <div style="font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--navy);margin-bottom:18px;">+ Tâche manuelle</div>
+    <div class="field" style="margin-bottom:12px"><label>Unité / Adresse</label><input id="at-unite" type="text" placeholder="12 rue de Rive — Apt 4B"></div>
+    <div class="field" style="margin-bottom:12px"><label>Pièce</label><input id="at-piece" type="text" placeholder="Salle de bain"></div>
+    <div class="field" style="margin-bottom:12px"><label>Description</label><input id="at-label" type="text" placeholder="Sol non lavé, traces de calcaire"></div>
+    <div class="field-group" style="margin-bottom:18px">
+      <div class="field"><label>Priorité</label>
+        <select id="at-priority">
+          <option value="prio">🔴 Prioritaire</option>
+          <option value="urgent">🟠 Urgent</option>
+          <option value="plan" selected>🟡 À planifier</option>
+        </select>
+      </div>
+      <div class="field"><label>Échéance</label><input id="at-due" type="date"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveManualTask()">Ajouter la tâche</button>
+  </div>
+</div>
+
+<!-- Modal: Détail tâche / résolution -->
+<div id="task-detail-modal" style="position:fixed;inset:0;background:rgba(15,22,40,.72);z-index:9997;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);">
+  <div style="background:var(--white);border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;padding:26px;">
+    <button onclick="closeTaskDetailModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;">✕</button>
+    <div id="task-detail-content"></div>
+  </div>
+</div>
 
 <!-- ══ CREDITS / STRIPE MODAL ══ -->
 <div id="credits-modal" style="position:fixed;inset:0;background:rgba(15,22,40,.72);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);">
@@ -996,10 +1129,11 @@ document.getElementById("auth-modal").addEventListener("click", (e) => {
 // Auth gate — if logged in, run action; if not, show modal then run after login
 function requireAuthThen(actionName) {
   const actions = {
-    generatePDF:    () => generatePDF(),
-    generateQCPDF:  () => generateQCPDF(),
-    saveEDL:        () => saveEDL(),
-    openCompare:    () => { setDashTab("edls"); },
+    generatePDF:          () => generatePDF(),
+    generateQCPDF:        () => generateQCPDF(),
+    saveEDL:              () => saveEDL(),
+    openCompare:          () => { setDashTab("edls"); },
+    generateTasksFromQC:  () => generateTasksFromQC(),
   };
   const fn = actions[actionName];
   if (!fn) return;
@@ -1013,12 +1147,15 @@ function requireAuthThen(actionName) {
 //  DASHBOARD
 // ═══════════════════════════════════════════
 function setDashTab(tab) {
-  ["new","edls","credits"].forEach(t => {
-    document.getElementById("dtab-"+t).classList.toggle("active", t === tab);
-    document.getElementById("dash-tab-"+t).style.display = t === tab ? "" : "none";
+  ["new","tasks","edls","credits"].forEach(t => {
+    const btn = document.getElementById("dtab-"+t);
+    const panel = document.getElementById("dash-tab-"+t);
+    if (btn) btn.classList.toggle("active", t === tab);
+    if (panel) panel.style.display = t === tab ? "" : "none";
   });
   if (tab === "edls") renderSavedEDLs();
   if (tab === "credits") renderCreditsDetail();
+  if (tab === "tasks") renderTasksTab();
 }
 
 function syncDashboardDateTime() {
@@ -1212,6 +1349,520 @@ async function confirmStripePayment() {
   btn.disabled = false; btn.textContent = "Payer →";
   if (error) toast("Erreur paiement : " + error.message);
 }
+
+// ═══════════════════════════════════════════
+//  TASKS SYSTEM
+// ═══════════════════════════════════════════
+let tasks = [];          // all tasks
+let prestataires = [];   // [{id, nom, contact, specialite, token}]
+let taskFilter = 'all';
+let taskPrestaFilter = null;
+let _missionTaskIds = []; // tasks selected for current mission
+let _taskPhotoInput = null; // pending photo slot
+let _resolveTaskId = null;
+
+// Load from localStorage (offline-first, Supabase sync à venir)
+try { tasks = JSON.parse(localStorage.getItem("statim_tasks") || "[]"); } catch(e) { tasks = []; }
+try { prestataires = JSON.parse(localStorage.getItem("statim_prestas") || "[]"); } catch(e) { prestataires = []; }
+
+function persistTasks() { try { localStorage.setItem("statim_tasks", JSON.stringify(tasks)); } catch(e) {} }
+function persistPrestas() { try { localStorage.setItem("statim_prestas", JSON.stringify(prestataires)); } catch(e) {} }
+
+// ── Generate tasks from QC results ──
+function generateTasksFromQC() {
+  const address = qcInspectionData.address || "Unité inconnue";
+  let created = 0;
+  const dueDays = { prio: 0, urgent: 1, plan: 7 };
+
+  Object.keys(qcData).forEach(piece => {
+    const d = qcData[piece];
+    if (!d || d.skipped) return;
+    (d.items || []).forEach((item, idx) => {
+      if (item.priority === "ok") return; // skip OK items
+      const due = new Date();
+      due.setDate(due.getDate() + (dueDays[item.priority] ?? 7));
+      // Find photo for this defect if available
+      const defectPhotos = (d.photos || []).filter(p => p.type === "detail" && (p.dataUrl || p.storageUrl));
+      const photoUrl = defectPhotos[idx]?.dataUrl || defectPhotos[idx]?.storageUrl || null;
+
+      tasks.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        unite: address,
+        piece,
+        label: item.label,
+        note: item.note || "",
+        priority: item.priority,
+        statut: "todo",
+        photoDefautUrl: photoUrl,
+        photoResolutionUrl: null,
+        prestataire_id: null,
+        due: due.toISOString().split("T")[0],
+        createdAt: new Date().toISOString(),
+        qcSource: true
+      });
+      created++;
+    });
+  });
+
+  persistTasks();
+  toast(`${created} tâche${created > 1 ? "s" : ""} générée${created > 1 ? "s" : ""} ✓`);
+  setDashTab("tasks");
+  goScreen(0);
+}
+
+// ── Render tasks tab ──
+function renderTasksTab() {
+  const container = document.getElementById("tasks-list-container");
+  const emptyEl = document.getElementById("tasks-empty");
+  if (!container) return;
+
+  let filtered = tasks.filter(t => {
+    if (taskFilter === "todo")  return t.statut === "todo";
+    if (taskFilter === "doing") return t.statut === "doing";
+    if (taskFilter === "done")  return t.statut === "done";
+    return true;
+  });
+  if (taskPrestaFilter) filtered = filtered.filter(t => t.prestataire_id === taskPrestaFilter);
+
+  // Render prestataires strip
+  renderPrestatairesStrip();
+
+  if (!filtered.length) {
+    container.innerHTML = "";
+    emptyEl.style.display = "block";
+    return;
+  }
+  emptyEl.style.display = "none";
+
+  // Group by unite
+  const byUnite = {};
+  filtered.forEach(t => {
+    if (!byUnite[t.unite]) byUnite[t.unite] = [];
+    byUnite[t.unite].push(t);
+  });
+
+  const priorityOrder = { prio: 0, urgent: 1, plan: 2, ok: 3 };
+  container.innerHTML = Object.keys(byUnite).map(unite => {
+    const uniteTasks = byUnite[unite].sort((a,b) => (priorityOrder[a.priority]??3) - (priorityOrder[b.priority]??3));
+    return `<div class="task-group">
+      <div class="task-group-header">📍 ${unite}</div>
+      ${uniteTasks.map(t => taskCardHTML(t)).join("")}
+    </div>`;
+  }).join("");
+
+  // Floating send mission btn if tasks exist
+  renderSendMissionBar(filtered);
+}
+
+function taskCardHTML(t) {
+  const dotClass = { prio:"dot-prio", urgent:"dot-urgent", plan:"dot-plan", ok:"dot-ok" }[t.priority] || "dot-plan";
+  const badgeClass = { todo:"badge-todo", doing:"badge-doing", done:"badge-done" }[t.statut] || "badge-todo";
+  const badgeLabel = { todo:"À faire", doing:"En cours", done:"Résolu" }[t.statut] || "À faire";
+  const presta = prestataires.find(p => p.id === t.prestataire_id);
+  const photoThumb = t.photoDefautUrl ? `<img src="${t.photoDefautUrl}" class="task-photo-preview" alt="">` : "";
+  return `<div class="task-card ${t.statut === "done" ? "done" : ""}" onclick="openTaskDetail('${t.id}')">
+    <div class="task-priority-dot ${dotClass}"></div>
+    <div class="task-body">
+      <div class="task-title">${t.label}</div>
+      <div class="task-meta">
+        <span>🚪 ${t.piece}</span>
+        ${t.due ? `<span>📅 ${t.due}</span>` : ""}
+        ${presta ? `<span>👷 ${presta.nom}</span>` : ""}
+      </div>
+    </div>
+    ${photoThumb}
+    <div class="task-actions" onclick="event.stopPropagation()">
+      <span class="task-status-badge ${badgeClass}">${badgeLabel}</span>
+      <button class="task-action-btn" title="Changer statut" onclick="cycleTaskStatus('${t.id}')">↻</button>
+      <button class="task-action-btn" title="Supprimer" onclick="deleteTask('${t.id}')">✕</button>
+    </div>
+  </div>`;
+}
+
+function renderPrestatairesStrip() {
+  const strip = document.getElementById("prestataires-strip");
+  if (!strip) return;
+  if (!prestataires.length) { strip.style.display = "none"; return; }
+  strip.style.display = "block";
+  strip.innerHTML = `<div style="font-family:'DM Mono',monospace;font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Filtrer par prestataire</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;">
+      <span class="presta-pill ${!taskPrestaFilter ? "active-filter" : ""}" onclick="filterByPresta(null)">Tous</span>
+      ${prestataires.map(p => `<span class="presta-pill ${taskPrestaFilter === p.id ? "active-filter" : ""}" onclick="filterByPresta('${p.id}')">
+        <span class="presta-dot"></span>${p.nom}
+        <span style="font-size:.6rem;opacity:.6">(${tasks.filter(t=>t.prestataire_id===p.id&&t.statut!=="done").length})</span>
+      </span>`).join("")}
+    </div>`;
+}
+
+function renderSendMissionBar(filtered) {
+  // Add floating send mission button at bottom of task list if tasks exist
+  const container = document.getElementById("tasks-list-container");
+  const activeTasks = filtered.filter(t => t.statut !== "done");
+  if (!activeTasks.length) return;
+  container.insertAdjacentHTML("beforeend", `
+    <div style="position:sticky;bottom:16px;text-align:center;margin-top:16px;">
+      <button class="btn btn-primary" onclick="openMissionModal()" style="box-shadow:0 4px 16px rgba(26,38,64,.3)">
+        📋 Envoyer une mission prestataire
+      </button>
+    </div>`);
+}
+
+// ── Task actions ──
+function cycleTaskStatus(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  const cycle = { todo: "doing", doing: "done", done: "todo" };
+  t.statut = cycle[t.statut] || "todo";
+  if (t.statut === "done") t.resolvedAt = new Date().toISOString();
+  persistTasks();
+  renderTasksTab();
+}
+
+function deleteTask(id) {
+  if (!confirm("Supprimer cette tâche ?")) return;
+  tasks = tasks.filter(t => t.id !== id);
+  persistTasks();
+  renderTasksTab();
+  toast("Tâche supprimée");
+}
+
+function filterTasks(f) {
+  taskFilter = f;
+  ["all","todo","doing","done"].forEach(k => {
+    const btn = document.getElementById("tf-"+k);
+    if (btn) btn.classList.toggle("active", k === f);
+  });
+  renderTasksTab();
+}
+
+function filterByPresta(id) {
+  taskPrestaFilter = id;
+  renderTasksTab();
+}
+
+// ── Task detail modal ──
+function openTaskDetail(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  const presta = prestataires.find(p => p.id === t.prestataire_id);
+  const priorityLabel = { prio:"🔴 Prioritaire", urgent:"🟠 Urgent", plan:"🟡 À planifier", ok:"✓ OK" }[t.priority] || "";
+  const statutLabel = { todo:"À faire", doing:"En cours", done:"Résolu" }[t.statut] || "";
+
+  document.getElementById("task-detail-content").innerHTML = `
+    <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);margin-bottom:4px;">${t.label}</div>
+    <div style="font-size:.75rem;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:18px;">📍 ${t.unite} · 🚪 ${t.piece}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--bg);border-radius:8px;padding:10px;"><div style="font-size:.62rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px;">PRIORITÉ</div><div style="font-weight:600;font-size:.88rem">${priorityLabel}</div></div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px;"><div style="font-size:.62rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px;">STATUT</div><div style="font-weight:600;font-size:.88rem">${statutLabel}</div></div>
+      ${t.due ? `<div style="background:var(--bg);border-radius:8px;padding:10px;"><div style="font-size:.62rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px;">ÉCHÉANCE</div><div style="font-weight:600;font-size:.88rem">${t.due}</div></div>` : ""}
+      ${presta ? `<div style="background:var(--bg);border-radius:8px;padding:10px;"><div style="font-size:.62rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px;">PRESTATAIRE</div><div style="font-weight:600;font-size:.88rem">${presta.nom}</div></div>` : ""}
+    </div>
+    ${t.note ? `<div style="font-size:.82rem;color:var(--text2);margin-bottom:14px;font-style:italic">${t.note}</div>` : ""}
+    ${t.photoDefautUrl ? `<div style="margin-bottom:14px;"><div style="font-size:.65rem;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:6px;">PHOTO DU DÉFAUT</div><img src="${t.photoDefautUrl}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;"></div>` : ""}
+
+    <div style="font-size:.65rem;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:7px;">RÉSOLUTION</div>
+    <div class="resolve-zone ${t.photoResolutionUrl ? "has-photo" : ""}" onclick="triggerResolutionPhoto('${t.id}')" id="resolve-zone-${t.id}">
+      ${t.photoResolutionUrl
+        ? `<img src="${t.photoResolutionUrl}" alt="Photo résolution">`
+        : `<div style="color:var(--muted);font-size:.84rem">📷 Appuyez pour ajouter la photo de résolution</div>`}
+    </div>
+
+    <div class="btn-row" style="margin-top:16px">
+      ${t.statut !== "done" ? `<button class="btn btn-success" style="flex:1;justify-content:center" onclick="markTaskDone('${t.id}')">✓ Marquer comme résolu</button>` : `<button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="cycleTaskStatus('${t.id}');closeTaskDetailModal()">↺ Réouvrir</button>`}
+      <button class="btn btn-ghost" onclick="closeTaskDetailModal()">Fermer</button>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <div class="field" style="flex:1;margin-bottom:0"><label>Assigner prestataire</label>
+        <select onchange="assignPresta('${t.id}',this.value)">
+          <option value="">— Aucun —</option>
+          ${prestataires.map(p => `<option value="${p.id}" ${t.prestataire_id===p.id?"selected":""}>${p.nom}</option>`).join("")}
+        </select>
+      </div>
+    </div>`;
+
+  // Wire resolution photo input
+  _resolveTaskId = id;
+  document.getElementById("task-detail-modal").style.display = "flex";
+}
+
+function triggerResolutionPhoto(taskId) {
+  _resolveTaskId = taskId;
+  _taskPhotoInput = "resolution";
+  document.getElementById("file-input").click();
+}
+
+function markTaskDone(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  t.statut = "done";
+  t.resolvedAt = new Date().toISOString();
+  persistTasks();
+  closeTaskDetailModal();
+  renderTasksTab();
+  toast("Tâche marquée comme résolue ✓");
+}
+
+function assignPresta(taskId, prestaId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  t.prestataire_id = prestaId || null;
+  persistTasks();
+  renderTasksTab();
+}
+
+function closeTaskDetailModal() {
+  document.getElementById("task-detail-modal").style.display = "none";
+  _resolveTaskId = null; _taskPhotoInput = null;
+}
+
+// ── Add manual task ──
+function openAddTaskModal() {
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  document.getElementById("at-due").value = d.toISOString().split("T")[0];
+  document.getElementById("at-unite").value = "";
+  document.getElementById("at-piece").value = "";
+  document.getElementById("at-label").value = "";
+  document.getElementById("add-task-modal").style.display = "flex";
+}
+function closeAddTaskModal() { document.getElementById("add-task-modal").style.display = "none"; }
+
+function saveManualTask() {
+  const label = document.getElementById("at-label").value.trim();
+  if (!label) { toast("Saisissez une description"); return; }
+  tasks.push({
+    id: Date.now().toString() + Math.random().toString(36).slice(2),
+    unite: document.getElementById("at-unite").value.trim() || "Non spécifié",
+    piece: document.getElementById("at-piece").value.trim() || "—",
+    label,
+    note: "",
+    priority: document.getElementById("at-priority").value,
+    statut: "todo",
+    photoDefautUrl: null,
+    photoResolutionUrl: null,
+    prestataire_id: null,
+    due: document.getElementById("at-due").value,
+    createdAt: new Date().toISOString(),
+    qcSource: false
+  });
+  persistTasks();
+  closeAddTaskModal();
+  renderTasksTab();
+  toast("Tâche ajoutée ✓");
+}
+
+// ── Mission modal ──
+function openMissionModal() {
+  // Populate prestataire select
+  const sel = document.getElementById("mission-prestataire-select");
+  sel.innerHTML = `<option value="">— Sélectionner ou créer —</option><option value="__new__">+ Nouveau prestataire</option>`;
+  prestataires.forEach(p => {
+    const o = document.createElement("option"); o.value = p.id; o.textContent = `${p.nom} (${p.specialite})`;
+    sel.appendChild(o);
+  });
+  document.getElementById("new-presta-fields").style.display = "none";
+  document.getElementById("mission-link-result").style.display = "none";
+
+  // Show active tasks preview
+  const activeTasks = tasks.filter(t => t.statut !== "done");
+  _missionTaskIds = activeTasks.map(t => t.id);
+  document.getElementById("mission-tasks-preview").innerHTML = activeTasks.length
+    ? activeTasks.map(t => `<div style="padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+        <input type="checkbox" checked onchange="toggleMissionTask('${t.id}',this.checked)" style="width:14px;height:14px;flex-shrink:0">
+        <span style="font-size:.8rem"><strong>${t.unite}</strong> · ${t.piece} — ${t.label}</span>
+      </div>`).join("")
+    : `<div style="color:var(--muted);font-size:.8rem;padding:8px 0">Aucune tâche active</div>`;
+
+  document.getElementById("mission-modal").style.display = "flex";
+}
+
+function toggleMissionTask(id, checked) {
+  if (checked) { if (!_missionTaskIds.includes(id)) _missionTaskIds.push(id); }
+  else { _missionTaskIds = _missionTaskIds.filter(x => x !== id); }
+}
+
+function onMissionPrestaChange() {
+  const val = document.getElementById("mission-prestataire-select").value;
+  document.getElementById("new-presta-fields").style.display = val === "__new__" ? "" : "none";
+}
+
+function closeMissionModal() { document.getElementById("mission-modal").style.display = "none"; }
+
+function sendMission() {
+  let prestaId = document.getElementById("mission-prestataire-select").value;
+
+  // Create new prestataire if needed
+  if (prestaId === "__new__") {
+    const nom = document.getElementById("new-presta-nom").value.trim();
+    if (!nom) { toast("Saisissez le nom du prestataire"); return; }
+    const newPresta = {
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      nom,
+      contact: document.getElementById("new-presta-contact").value.trim(),
+      specialite: document.getElementById("new-presta-specialite").value,
+      token: generateToken()
+    };
+    prestataires.push(newPresta);
+    persistPrestas();
+    prestaId = newPresta.id;
+  }
+
+  if (!prestaId) { toast("Sélectionnez un prestataire"); return; }
+
+  // Assign tasks to prestataire + mark as "doing"
+  const instructions = document.getElementById("mission-instructions").value.trim();
+  _missionTaskIds.forEach(id => {
+    const t = tasks.find(t => t.id === id);
+    if (t) {
+      t.prestataire_id = prestaId;
+      if (t.statut === "todo") t.statut = "doing";
+      t.instructions = instructions;
+    }
+  });
+  persistTasks();
+
+  // Generate mission link using prestataire token
+  const presta = prestataires.find(p => p.id === prestaId);
+  const missionUrl = `${window.location.origin}${window.location.pathname}?mission=${presta.token}`;
+  document.getElementById("mission-link-input").value = missionUrl;
+  document.getElementById("mission-link-result").style.display = "block";
+  renderTasksTab();
+  toast(`Mission envoyée à ${presta.nom} ✓`);
+}
+
+function copyMissionLink() {
+  const input = document.getElementById("mission-link-input");
+  navigator.clipboard?.writeText(input.value).then(() => toast("Lien copié ✓")).catch(() => {
+    input.select(); document.execCommand("copy"); toast("Lien copié ✓");
+  });
+}
+
+function generateToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+// ── Mission page (prestataire view) ──
+function checkMissionPage() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("mission");
+  if (!token) return;
+  const presta = prestataires.find(p => p.token === token);
+  if (!presta) {
+    document.body.innerHTML = `<div style="font-family:'DM Sans',sans-serif;padding:40px 20px;max-width:500px;margin:0 auto;text-align:center;">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:#1a2640;margin-bottom:8px;">Statim</div>
+      <p style="color:#7a8ba8">Lien de mission invalide ou expiré.</p></div>`;
+    return;
+  }
+  const missionTasks = tasks.filter(t => t.prestataire_id === presta.id && t.statut !== "done");
+  renderMissionPage(presta, missionTasks);
+}
+
+function renderMissionPage(presta, missionTasks) {
+  const byUnite = {};
+  missionTasks.forEach(t => { if (!byUnite[t.unite]) byUnite[t.unite] = []; byUnite[t.unite].push(t); });
+
+  document.body.innerHTML = `
+    <div style="font-family:'DM Sans',sans-serif;background:#f4f5f8;min-height:100vh;">
+      <div style="background:#1a2640;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+        <div style="width:28px;height:28px;background:rgba(255,255,255,.12);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;">🏠</div>
+        <div style="font-family:'DM Serif Display',serif;color:#fff;font-size:1rem;">Statim <span style="font-size:.6rem;background:rgba(47,84,150,.5);color:rgba(255,255,255,.65);padding:2px 6px;border-radius:3px;font-family:'DM Mono',monospace;">Mission</span></div>
+      </div>
+      <div style="max-width:640px;margin:0 auto;padding:24px 16px 80px;">
+        <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;border:1.5px solid #dde2ec;">
+          <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:#1a2640;margin-bottom:4px;">Bonjour ${presta.nom} 👋</div>
+          <div style="font-size:.8rem;color:#7a8ba8;font-family:'DM Mono',monospace;">${missionTasks.length} intervention${missionTasks.length>1?"s":""} à effectuer</div>
+        </div>
+        ${Object.keys(byUnite).map(unite => `
+          <div style="margin-bottom:20px;">
+            <div style="font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#7a8ba8;margin-bottom:10px;display:flex;align-items:center;gap:8px;">📍 ${unite}<span style="flex:1;height:1px;background:#dde2ec;display:inline-block"></span></div>
+            ${byUnite[unite].map(t => `
+              <div style="background:#fff;border:1.5px solid #dde2ec;border-radius:10px;padding:15px;margin-bottom:10px;" id="mission-task-${t.id}">
+                <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">
+                  <div style="width:10px;height:10px;border-radius:50%;background:${{prio:"#c0392b",urgent:"#f97316",plan:"#f59e0b"}[t.priority]||"#f59e0b"};flex-shrink:0;margin-top:4px;"></div>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:.9rem;color:#1a2640;margin-bottom:2px;">${t.label}</div>
+                    <div style="font-size:.75rem;color:#7a8ba8;font-family:'DM Mono',monospace;">🚪 ${t.piece}${t.instructions ? ` · 🔑 ${t.instructions}` : ""}</div>
+                  </div>
+                </div>
+                ${t.photoDefautUrl ? `<img src="${t.photoDefautUrl}" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;margin-bottom:10px;">` : ""}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  ${t.statut === "todo" ? `<button onclick="prestaAccept('${t.id}')" style="flex:1;padding:10px;border-radius:8px;border:none;background:#1a2640;color:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">✅ Prendre en charge</button>` : ""}
+                  ${t.statut === "doing" ? `
+                    <button onclick="prestaPhotoResolve('${t.id}')" style="flex:1;padding:10px;border-radius:8px;border:2px dashed #c8d0e0;background:#f4f5f8;color:#3d4f6e;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;" id="resolve-btn-${t.id}">📷 Photo d'intervention</button>
+                    <button onclick="prestaResolve('${t.id}')" style="flex:1;padding:10px;border-radius:8px;border:none;background:#2e7d5e;color:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">✓ Intervention terminée</button>
+                  ` : ""}
+                  ${t.statut === "done" ? `<div style="padding:10px;border-radius:8px;background:#dcfce7;color:#166534;font-size:.85rem;font-weight:600;text-align:center;flex:1">✓ Résolu le ${new Date(t.resolvedAt||Date.now()).toLocaleDateString("fr-FR")}</div>` : ""}
+                </div>
+                ${t.photoResolutionUrl ? `<img src="${t.photoResolutionUrl}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover;margin-top:8px;">` : ""}
+              </div>`).join("")}
+          </div>`).join("")}
+        ${!missionTasks.length ? `<div style="text-align:center;padding:40px;color:#7a8ba8">Aucune intervention en attente. Merci !</div>` : ""}
+      </div>
+    </div>
+    <input type="file" id="mission-file-input" accept="image/*" capture="environment" style="display:none">`;
+
+  // Wire file input for resolution photos
+  document.getElementById("mission-file-input").addEventListener("change", (e) => {
+    const file = e.target.files[0]; if (!file || !_resolveTaskId) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const t = tasks.find(t => t.id === _resolveTaskId);
+      if (t) { t.photoResolutionUrl = ev.target.result; persistTasks(); renderMissionPage(presta, tasks.filter(t => t.prestataire_id === presta.id && t.statut !== "done")); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function prestaAccept(taskId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  t.statut = "doing";
+  t.acceptedAt = new Date().toISOString();
+  persistTasks();
+  const card = document.getElementById("mission-task-" + taskId);
+  if (card) card.querySelector("button").outerHTML = `<div style="padding:10px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;font-weight:600;text-align:center;flex:1">En cours d'intervention…</div>`;
+}
+
+function prestaPhotoResolve(taskId) {
+  _resolveTaskId = taskId;
+  document.getElementById("mission-file-input").click();
+}
+
+function prestaResolve(taskId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  t.statut = "done";
+  t.resolvedAt = new Date().toISOString();
+  persistTasks();
+  const card = document.getElementById("mission-task-" + taskId);
+  if (card) {
+    const btns = card.querySelectorAll("button");
+    btns.forEach(b => b.remove());
+    card.insertAdjacentHTML("beforeend", `<div style="padding:10px;border-radius:8px;background:#dcfce7;color:#166534;font-size:.85rem;font-weight:600;text-align:center;">✓ Intervention confirmée</div>`);
+  }
+}
+
+// Wire resolution photo from task detail modal into file-input handler
+// (appended to existing file-input change listener)
+const _origFileInputHandler = document.getElementById("file-input").onchange;
+document.getElementById("file-input").addEventListener("change", (e) => {
+  if (_taskPhotoInput === "resolution" && _resolveTaskId) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const t = tasks.find(t => t.id === _resolveTaskId);
+      if (t) {
+        t.photoResolutionUrl = ev.target.result;
+        persistTasks();
+        openTaskDetail(_resolveTaskId);
+        toast("Photo de résolution enregistrée ✓");
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+    _taskPhotoInput = null;
+  }
+});
 
 function renderCreditsDetail() {
   const planLabels = { none: "Sans abonnement", starter: "Starter — CHF 29/mois", pro: "Pro — CHF 79/mois", unlimited: "Illimité — CHF 199/mois" };
@@ -2117,6 +2768,9 @@ function saveSig(who) {
 //  RAPPORT
 // ═══════════════════════════════════════════
 function buildReport() {
+  // Show tasks button only for QC mode
+  const taskBtn = document.getElementById("btn-gen-tasks");
+  if (taskBtn) taskBtn.style.display = currentAppMode === "qc" ? "" : "none";
   const doneRooms = selectedRooms.filter(r => roomResults[r] && !roomResults[r].skipped);
   const allUrgent = doneRooms.flatMap(r => roomResults[r].reparations_urgentes || []);
   const takenPhotos = doneRooms.flatMap(r => (roomResults[r].photos || []).filter(p => p.dataUrl || p.storageUrl));
@@ -2844,6 +3498,7 @@ const _timeVal = String(_now.getHours()).padStart(2,"0") + ":" + String(_now.get
 buildStepDots(5);
 setDots(0);
 setupChips();
+checkMissionPage(); // intercept ?mission=token URL
 
 // Load Supabase from CDN asynchronously — doesn't block app
 (function loadSupabaseCDN() {
