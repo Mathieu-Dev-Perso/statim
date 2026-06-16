@@ -9,6 +9,19 @@ exports.handler = async function(event) {
   console.log('API key present:', !!process.env.ANTHROPIC_API_KEY);
   console.log('API key starts with:', process.env.ANTHROPIC_API_KEY?.substring(0, 10));
 
+  // Parse body and force correct model if missing or wrong
+  let bodyObj;
+  try {
+    bodyObj = JSON.parse(event.body);
+  } catch(e) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+  }
+
+  // Force valid model — claude-sonnet-4-6 is available on all tiers
+  bodyObj.model = 'claude-sonnet-4-6';
+
+  const bodyStr = JSON.stringify(bodyObj);
+
   return new Promise((resolve) => {
     const options = {
       hostname: 'api.anthropic.com',
@@ -18,7 +31,7 @@ exports.handler = async function(event) {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'Content-Length': Buffer.byteLength(event.body)
+        'Content-Length': Buffer.byteLength(bodyStr)
       }
     };
 
@@ -48,7 +61,7 @@ exports.handler = async function(event) {
       });
     });
 
-    req.write(event.body);
+    req.write(bodyStr);
     req.end();
   });
 };
