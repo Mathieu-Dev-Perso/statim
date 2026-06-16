@@ -1823,7 +1823,7 @@ JSON uniquement :
     const resp = await fetch("/.netlify/functions/claude", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
     });
     const data = await resp.json();
     const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, "").trim());
@@ -2257,7 +2257,7 @@ async function runComparison() {
   const sorSum = sorEDL.selectedRooms.map(r => { const res = sorEDL.roomResults[r]; if (!res || res.skipped) return null; return `${r}: état=${res.etat_general}, réparations=[${(res.reparations_urgentes || []).join(", ")}]`; }).filter(Boolean).join("\n");
   const prompt = `Expert état des lieux. Compare entrée et sortie.\nENTRÉE (${entEDL.inspectionData.date}):\n${entSum}\nSORTIE (${sorEDL.inspectionData.date}):\n${sorSum}\nJSON uniquement:\n{"resume":"bilan 2-3 phrases","degats_nouveaux":["..."],"ameliorations_constatees":["..."],"par_piece":[{"piece":"nom","entree_etat":"bon|passable|mauvais","sortie_etat":"bon|passable|mauvais","changement":"degradation|amelioration|stable","details":"explication"}],"conclusion_financiere":"estimation responsabilités locataire"}`;
   try {
-    const resp = await fetch("/.netlify/functions/claude", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }) });
+    const resp = await fetch("/.netlify/functions/claude", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }) });
     const data = await resp.json();
     const diff = JSON.parse(data.content[0].text.replace(/```json|```/g, "").trim());
     compareData.diff = diff; renderComparison(entEDL, sorEDL, diff);
@@ -2614,7 +2614,7 @@ JSON seul, sans markdown.`;
   try {
     const resp = await fetch("/.netlify/functions/claude", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
     });
     const data = await resp.json();
     const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, "").trim());
